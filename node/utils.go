@@ -15,7 +15,7 @@ func simpleFileName(fpath string) string {
 	return strings.TrimSuffix(fn, ext)
 }
 
-func loadData(baseDir string) (map[string]interface{}, error) {
+func loadData(baseDir string) (map[string]map[string]interface{}, error) {
 	files, err := os.ReadDir(baseDir)
 	if err != nil {
 		return nil, err
@@ -23,9 +23,9 @@ func loadData(baseDir string) (map[string]interface{}, error) {
 	return readFiles(baseDir, files)
 }
 
-func readFiles(baseDir string, files []fs.DirEntry) (map[string]interface{}, error) {
+func readFiles(baseDir string, files []fs.DirEntry) (map[string]map[string]interface{}, error) {
 	var wg sync.WaitGroup
-	data := make(map[string]interface{})
+	data := make(map[string]map[string]interface{})
 	errors := make([]error, len(files))
 
 	for i := 0; i < len(files); i++ {
@@ -55,15 +55,14 @@ func readFiles(baseDir string, files []fs.DirEntry) (map[string]interface{}, err
 	return data, nil
 }
 
-func readFile(filePath string) (interface{}, error) {
-	var err error
+func readFile(filePath string) (map[string]interface{}, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	var m interface{}
+	var m map[string]interface{}
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&m)
 	if err != nil {

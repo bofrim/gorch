@@ -40,7 +40,19 @@ func main() {
 						Required: true,
 						Action: func(ctx *cli.Context, v string) error {
 							if _, err := os.Stat(v); os.IsNotExist(err) {
-								return fmt.Errorf("flag data value %v does not exist", v)
+								return fmt.Errorf("data directory %v does not exist", v)
+							}
+							return nil
+						},
+					},
+					&cli.StringFlag{
+						Name:     "actions",
+						Aliases:  []string{"a"},
+						Usage:    "Specify a path to a file containing the node's actions",
+						Required: false,
+						Action: func(ctx *cli.Context, v string) error {
+							if _, err := os.Stat(v); os.IsNotExist(err) {
+								return fmt.Errorf("actions file %v does not exist", v)
 							}
 							return nil
 						},
@@ -48,11 +60,15 @@ func main() {
 				},
 				Action: func(cCtx *cli.Context) error {
 					fmt.Println("Gorch node running on port: ", cCtx.Int("port"))
-					absPath, _ := filepath.Abs(cCtx.String("data"))
-					fmt.Println("Gorch node data directory: ", absPath)
+					absDataPath, _ := filepath.Abs(cCtx.String("data"))
+					absActionPath, _ := filepath.Abs(cCtx.String("actions"))
+
+					fmt.Println("Gorch node data directory: ", absDataPath)
+					fmt.Println("Gorch node actions path: ", absActionPath)
 					node := node.Node{
-						Port:    cCtx.Int("port"),
-						DataDir: absPath,
+						Port:        cCtx.Int("port"),
+						DataDir:     absDataPath,
+						ActionsPath: absActionPath,
 					}
 					return node.Run()
 				},

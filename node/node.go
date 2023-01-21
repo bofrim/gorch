@@ -7,19 +7,30 @@ import (
 )
 
 type Node struct {
-	Port    int
-	DataDir string
-	Data    map[string]interface{}
+	Port        int
+	DataDir     string
+	Data        map[string]map[string]interface{}
+	ActionsPath string
+	Actions     map[string]Action
 }
 
 func (node *Node) Run() error {
 	// Initialize Node
+	// Load data
 	data, err := loadData(node.DataDir)
 	if err != nil {
 		log.Fatal(err)
 		return err
 	}
 	node.Data = data
+
+	// Load actions
+	actions, err := loadActions(node.ActionsPath)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	node.Actions = actions
 
 	// Run Node services
 	var wg sync.WaitGroup
