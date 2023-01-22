@@ -23,4 +23,5 @@ go run gorch.go
 ## TODO
 
 * [ ] Add a central that can gateway requests to multiple nodes
-* [ ] Figure out how to register and run remote actions (registration can happen at node startup)
+* [ ] Add a way to specify a configuration file for a node
+* [ ] Add a way to run periodic actions on a node

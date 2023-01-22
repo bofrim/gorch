@@ -14,38 +14,48 @@ import (
 type Action struct {
 	Name        string   `yaml:"name" json:"name"`
 	Params      []string `yaml:"params" json:"params"`
-	Command     string   `yaml:"command" json:"command"`
+	Commands    []string `yaml:"commands" json:"commands"`
 	Description string   `yaml:"description" json:"description"`
 }
 
-func (a Action) BuildCommand(params map[string]string) (string, error) {
-	t, err := template.New(a.Name).Parse(a.Command)
-	if err != nil {
-		return "", err
-	}
+func (a Action) BuildCommands(params map[string]string) ([]string, error) {
 
-	var b bytes.Buffer
-	if err := t.Execute(&b, params); err != nil {
-		return "", err
+	commands := make([]string, len(a.Commands))
+	for i, command := range a.Commands {
+
+		t, err := template.New(a.Name).Parse(command)
+		if err != nil {
+			return nil, err
+		}
+
+		var b bytes.Buffer
+		if err := t.Execute(&b, params); err != nil {
+			return nil, err
+		}
+		commands[i] = b.String()
 	}
-	result := b.String()
-	return result, nil
+	return commands, nil
 }
 
-func (a Action) Run(params map[string]string) (string, error) {
-	cmdStr, err := a.BuildCommand(params)
+func (a Action) Run(params map[string]string) ([]string, error) {
+	commands, err := a.BuildCommands(params)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	args := strings.Fields(cmdStr)
-	cmd := exec.Command(args[0], args[1:]...)
-	out, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
+	results := make([]string, len(commands))
 
-	return string(out), nil
+	for i, c := range commands {
+		args := strings.Fields(c)
+		cmd := exec.Command(args[0], args[1:]...)
+		out, err := cmd.Output()
+		if err != nil {
+			return nil, err
+		}
+		results[i] = string(out)
+
+	}
+	return results, nil
 }
 
 func loadActions(filePath string) (map[string]Action, error) {

@@ -7,11 +7,14 @@ import (
 )
 
 type Node struct {
-	Port        int
-	DataDir     string
-	Data        map[string]map[string]interface{}
-	ActionsPath string
-	Actions     map[string]Action
+	Name          string
+	Port          int
+	DataDir       string
+	Data          map[string]map[string]interface{}
+	ActionsPath   string
+	Actions       map[string]Action
+	OrchAddr      string
+	OrchConnState ClientState
 }
 
 func (node *Node) Run() error {
@@ -25,23 +28,41 @@ func (node *Node) Run() error {
 	node.Data = data
 
 	// Load actions
+	if node.ActionsPath != "" {
+		node.ReloadActions(node.ActionsPath)
+	}
+
+	// Run Node services
+	var wg sync.WaitGroup
+	ctx, cancel := context.WithCancel(context.Background())
+	done := func() {
+		wg.Done()
+		cancel()
+	}
+
+	wg.Add(1)
+	go MonitorThread(node, ctx, done)
+	wg.Add(1)
+	go ServerThread(node, ctx, done)
+
+	// Finish
+	wg.Wait()
+	cancel()
+	return nil
+}
+
+func (node *Node) ReloadActions(path string) error {
+	// If no path was setup do nothing
+	// Maybe pass some info back in the future
+	if path == "" {
+		return nil
+	}
 	actions, err := loadActions(node.ActionsPath)
 	if err != nil {
 		log.Fatal(err)
 		return err
 	}
 	node.Actions = actions
-
-	// Run Node services
-	var wg sync.WaitGroup
-	wg.Add(1)
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go MonitorThread(node, ctx, wg.Done)
-	go ServerThread(node, ctx, wg.Done)
-
-	// Finish
-	wg.Wait()
-	cancel()
+	node.ActionsPath = path
 	return nil
 }

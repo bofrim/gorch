@@ -3,6 +3,8 @@ package node
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -12,10 +14,14 @@ func ServerThread(node *Node, ctx context.Context, done func()) {
 
 	// Create a new app
 	app := fiber.New()
+	go func() {
+		<-ctx.Done()
+		app.Shutdown()
+	}()
 
 	// Status endpoint
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Gorch is up and running!")
+		return c.SendString("Gorch node is up and running!")
 	})
 
 	// Endpoint for interacting with the node's data
@@ -64,11 +70,19 @@ func ServerThread(node *Node, ctx context.Context, done func()) {
 			params[string(key)] = string(value)
 		})
 		action := node.Actions[name]
-		s, err := action.Run(params)
+		outputs, err := action.Run(params)
 		if err != nil {
 			return err
 		}
-		return c.SendString(s)
+		out := strings.Join(outputs, "\n")
+		return c.SendString(out)
+	})
+	app.Get(("/reload/"), func(c *fiber.Ctx) error {
+		if _, err := os.Stat(node.ActionsPath); os.IsNotExist(err) {
+			return c.SendStatus(fiber.StatusNotFound)
+		}
+		node.ReloadActions(node.ActionsPath)
+		return c.SendStatus(fiber.StatusOK)
 	})
 
 	// Run the App

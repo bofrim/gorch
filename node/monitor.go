@@ -20,7 +20,7 @@ func MonitorThread(node *Node, ctx context.Context, done func()) {
 	defer watcher.Close()
 
 	// Start watching
-	go dataMonitor(*watcher, node, ctx)
+	go dataMonitor(*watcher, node, ctx, done)
 
 	// Add the directory to be watched
 	err = watcher.Add(node.DataDir)
@@ -33,7 +33,7 @@ func MonitorThread(node *Node, ctx context.Context, done func()) {
 	<-ctx.Done()
 }
 
-func dataMonitor(watcher fsnotify.Watcher, node *Node, ctx context.Context) {
+func dataMonitor(watcher fsnotify.Watcher, node *Node, ctx context.Context, done func()) {
 	for {
 		select {
 		case event, ok := <-watcher.Events:
