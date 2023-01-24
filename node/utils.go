@@ -28,6 +28,7 @@ func readFiles(baseDir string, files []fs.DirEntry) (map[string]map[string]inter
 	data := make(map[string]map[string]interface{})
 	errors := make([]error, len(files))
 
+	var mu = &sync.Mutex{}
 	for i := 0; i < len(files); i++ {
 		file := files[i]
 		index := i
@@ -42,6 +43,8 @@ func readFiles(baseDir string, files []fs.DirEntry) (map[string]map[string]inter
 				errors[index] = err
 				return
 			}
+			mu.Lock()
+			defer mu.Unlock()
 			data[simpleFileName(file.Name())] = fileData
 		}()
 	}

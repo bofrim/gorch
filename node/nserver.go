@@ -77,7 +77,7 @@ func ServerThread(node *Node, ctx context.Context, done func()) {
 		out := strings.Join(outputs, "\n")
 		return c.SendString(out)
 	})
-	app.Get(("/reload/"), func(c *fiber.Ctx) error {
+	app.Post(("/reload/"), func(c *fiber.Ctx) error {
 		if _, err := os.Stat(node.ActionsPath); os.IsNotExist(err) {
 			return c.SendStatus(fiber.StatusNotFound)
 		}

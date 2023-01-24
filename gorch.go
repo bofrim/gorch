@@ -73,11 +73,11 @@ func main() {
 						Value:       "Anon",
 						DefaultText: "Anon",
 						Action: func(ctx *cli.Context, v string) error {
-							pattern := "^[a-zA-Z][a-zA-Z0-9_.-]+$"
+							pattern := "^[a-zA-Z][a-zA-Z0-9_.-]*$"
 							match, _ := regexp.MatchString(pattern, v)
 							if !match {
-								log.Printf("the string %s cannot be used as a node name. Ensure it matches %s", v, pattern)
-								return fmt.Errorf("the string %s cannot be used as a node name. Ensure it matches %s", v, pattern)
+								log.Printf("the string %s cannot be used as a node name. Ensure it matches this pattern: %s", v, pattern)
+								return fmt.Errorf("the string %s cannot be used as a node name. Ensure it matches this pattern: %s", v, pattern)
 							}
 							return nil
 						},
@@ -96,11 +96,12 @@ func main() {
 						Port:        cCtx.Int("port"),
 						DataDir:     absDataPath,
 						ActionsPath: absActionPath,
-						OrchAddr:    cCtx.String("server"),
+						OrchAddr:    cCtx.String("orch"),
 					}
-					fmt.Println("Gorch node running with name: ", cCtx.String("name"))
-					fmt.Println("Gorch node data directory: ", absDataPath)
-					fmt.Println("Gorch node actions path: ", absActionPath)
+					fmt.Println("Gorch node running with name: ", node.Name)
+					fmt.Println("Gorch node data directory: ", node.DataDir)
+					fmt.Println("Gorch node actions path: ", node.ActionsPath)
+					fmt.Println("Gorch orchestrator url: ", node.OrchAddr)
 					return node.Run()
 				},
 			},

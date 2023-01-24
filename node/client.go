@@ -2,6 +2,9 @@ package node
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"net/http"
 	"time"
 )
 
@@ -14,8 +17,28 @@ const (
 	Registered
 )
 
-func ClientThread(n Node, ctx context.Context, done func()) {
+func ClientThread(n *Node, ctx context.Context, done func()) {
 	defer done()
+
+	// Register with the orchestrator
+	url := fmt.Sprintf("http://%s/register/%s", n.OrchAddr, n.Name)
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("Bad request")
+		return
+	}
+	log.Println("Registered")
 
 	ticker := time.NewTicker(ClientPollPeriod)
 	for {
