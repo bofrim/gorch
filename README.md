@@ -29,3 +29,8 @@ go run gorch.go
 
 * [ ] Add a way to specify a configuration file for a node
 * [ ] Add a way to run periodic actions on a node
+* [ ] Provide an interface for users to get data from nodes through the orchestrator
+* [ ] Provide an interface for users to run actions on nodes through the orchestrator
+* [ ] Add streaming output for actions
+* [ ] Setup web hooks for data changes or events related to actions
+* [ ] Setup centralized logging for nodes so logs will be accessible through the orchestrator even if the node is offline
