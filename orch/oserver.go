@@ -34,10 +34,21 @@ func ServerThread(orch *Orch, ctx context.Context, done func()) {
 				Address:         c.Params("addr", c.IP()),
 				LastInteraction: time.Now(),
 			}
-			orch.Nodes[name] = conn
+			orch.Nodes[name] = &conn
 		}
 		log.Printf("Orch now has %d nodes registered.\n", len(orch.Nodes))
 		return nil
+	})
+	app.Post("/ping/:name", func(c *fiber.Ctx) error {
+		name := c.Params("name")
+		node, ok := orch.Nodes[name]
+		if ok {
+			log.Printf("Orch got pinged by %s. [%s]\n", name, orch.Nodes[name].LastInteraction.String())
+			node.LastInteraction = time.Now()
+		} else {
+		}
+		return nil
+
 	})
 	app.Get("/nodes", func(c *fiber.Ctx) error {
 		nodes := make([]string, len(orch.Nodes))

@@ -7,12 +7,12 @@ import (
 
 type Orch struct {
 	Port  int
-	Nodes map[string]NodeConnection
+	Nodes map[string]*NodeConnection
 }
 
 func (orch *Orch) Run() error {
 	if orch.Nodes == nil {
-		orch.Nodes = make(map[string]NodeConnection)
+		orch.Nodes = make(map[string]*NodeConnection)
 	}
 
 	var wg sync.WaitGroup

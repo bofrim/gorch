@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const DisconnectionPeriod = 5 * time.Second
+const DisconnectionPeriod = 10 * time.Second
 
 type NodeConnection struct {
 	Name            string
