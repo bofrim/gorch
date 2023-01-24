@@ -96,10 +96,15 @@ func ping(addr, name string) error {
 		fmt.Println(err)
 		return err
 	}
-	if resp.StatusCode != http.StatusOK {
-		fmt.Println("Bad request")
+	switch resp.StatusCode {
+	case http.StatusOK:
+		// success!
+	default:
+		// Something else
+		fmt.Printf("Bad request: %s\n", resp.Status)
 		return errors.New("request not OK")
 	}
+
 	log.Println("Pinged")
 	return nil
 }

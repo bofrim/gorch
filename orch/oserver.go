@@ -46,6 +46,9 @@ func ServerThread(orch *Orch, ctx context.Context, done func()) {
 			log.Printf("Orch got pinged by %s. [%s]\n", name, orch.Nodes[name].LastInteraction.String())
 			node.LastInteraction = time.Now()
 		} else {
+			log.Printf("Orch got pinged by %s, but it was not registered.\n", name)
+			c.Response().SetStatusCode(404)
+			return c.SendString("Node not registered.")
 		}
 		return nil
 
