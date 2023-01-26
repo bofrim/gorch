@@ -37,6 +37,12 @@ func main() {
 						},
 					},
 					&cli.StringFlag{
+						Name:    "host",
+						Aliases: []string{"H"},
+						Usage:   "Specify the address the node will be accessible at",
+						Value:   "127.0.0.1",
+					},
+					&cli.StringFlag{
 						Name:     "data",
 						Aliases:  []string{"d"},
 						Usage:    "Specify a directory to use as the node's data directory",
@@ -93,7 +99,8 @@ func main() {
 
 					node := node.Node{
 						Name:        cCtx.String("name"),
-						Port:        cCtx.Int("port"),
+						ServerPort:  cCtx.Int("port"),
+						ServerAddr:  cCtx.String("host"),
 						DataDir:     absDataPath,
 						ActionsPath: absActionPath,
 						OrchAddr:    cCtx.String("orch"),

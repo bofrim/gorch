@@ -3,6 +3,8 @@ package node
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
@@ -63,14 +65,15 @@ func ServerThread(node *Node, ctx context.Context, done func()) {
 		}
 		return c.SendString(string(s))
 	})
-	actionEp.Get("/:name", func(c *fiber.Ctx) error {
+	actionEp.Post("/:name", func(c *fiber.Ctx) error {
 		name := c.Params("name")
-		params := make(map[string]string)
-		c.Request().URI().QueryArgs().VisitAll(func(key, value []byte) {
-			params[string(key)] = string(value)
-		})
+		var body map[string]string
+		err := json.Unmarshal(c.Body(), &body)
+		if err != nil {
+			return c.Status(http.StatusBadRequest).Send([]byte(err.Error()))
+		}
 		action := node.Actions[name]
-		outputs, err := action.Run(params)
+		outputs, err := action.Run(body)
 		if err != nil {
 			return err
 		}
@@ -86,7 +89,10 @@ func ServerThread(node *Node, ctx context.Context, done func()) {
 	})
 
 	// Run the App
-	app.Listen(":3000")
+	if node.ServerPort == 0 {
+		node.ServerPort = 3000
+	}
+	app.Listen(fmt.Sprintf(":%d", node.ServerPort))
 }
 
 type Empty struct{}

@@ -8,7 +8,8 @@ import (
 
 type Node struct {
 	Name          string
-	Port          int
+	ServerAddr    string
+	ServerPort    int
 	DataDir       string
 	Data          map[string]map[string]interface{}
 	ActionsPath   string

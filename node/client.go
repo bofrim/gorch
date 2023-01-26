@@ -1,12 +1,16 @@
 package node
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/bofrim/gorch/orch"
 )
 
 type ClientState int
@@ -23,8 +27,6 @@ const (
 func ClientThread(n *Node, ctx context.Context, done func()) {
 	defer done()
 	n.OrchConnState = Polling
-	register(n.OrchAddr, n.Name)
-
 	ticker := time.NewTicker(ClientPollPeriod)
 	for {
 		select {
@@ -32,7 +34,7 @@ func ClientThread(n *Node, ctx context.Context, done func()) {
 			switch n.OrchConnState {
 			case Polling:
 				log.Println("Polling...")
-				if err := register(n.OrchAddr, n.Name); err == nil {
+				if err := register(n.OrchAddr, n.Name, n.ServerAddr, n.ServerPort); err == nil {
 					n.OrchConnState = Registered
 				}
 			case Registered:
@@ -59,14 +61,25 @@ func ClientThread(n *Node, ctx context.Context, done func()) {
 	}
 }
 
-func register(addr, name string) error {
+func register(orchAddr, nodeName string, nodeAddr string, nodePort int) error {
 	// Register with the orchestrator
-	url := fmt.Sprintf("http://%s/register/%s", addr, name)
-	req, err := http.NewRequest("POST", url, nil)
+	url := fmt.Sprintf("http://%s/register/", orchAddr)
+	data := orch.NodeRegistration{
+		NodeName: nodeName,
+		NodeAddr: nodeAddr,
+		NodePort: nodePort,
+	}
+	b, err := json.Marshal(data)
+	log.Printf("Register with data: %s", b)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(b))
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
+	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
