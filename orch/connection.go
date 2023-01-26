@@ -20,14 +20,14 @@ type NodeConnection struct {
 	LastInteraction time.Time
 }
 
-func (nc *NodeConnection) RequestAction(name string, data []byte) ([]byte, error) {
+func (nc *NodeConnection) RequestAction(actionName string, reqBody []byte) ([]byte, error) {
 	log.Printf("Address: %s", nc.Address)
 	log.Printf("Port: %d", nc.Port)
-	log.Printf("Action: %s", name)
-	url := fmt.Sprintf("http://%s:%d/action/%s", nc.Address, nc.Port, name)
+	log.Printf("Action: %s", actionName)
+	url := fmt.Sprintf("http://%s:%d/action/%s", nc.Address, nc.Port, actionName)
 	log.Printf("Sending action request to %s at address: %s", nc.Name, url)
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -53,11 +53,44 @@ func (nc *NodeConnection) RequestAction(name string, data []byte) ([]byte, error
 		return nil, err
 	}
 
-	log.Printf("Finished action %s", name)
+	log.Printf("Finished action %s", actionName)
 	log.Printf("The response was: %s", body)
 
 	return body, nil
 
+}
+
+func (nc *NodeConnection) RequestData(reqBody []byte) ([]byte, error) {
+	url := fmt.Sprintf("http://%s:%d/data", nc.Address, nc.Port)
+	log.Printf("Sending action request to %s at address: %s", nc.Name, url)
+	req, err := http.NewRequest("GET", url, bytes.NewBuffer(reqBody))
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	switch resp.StatusCode {
+	case http.StatusOK:
+		// success!
+	default:
+		// Something else
+		fmt.Printf("Bad request: %s\n", resp.Status)
+		return nil, errors.New("request not OK")
+	}
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("The response was: %s", respBody)
+	return respBody, nil
 }
 
 func DisconnectThread(orch *Orch, ctx context.Context, done func()) {

@@ -77,23 +77,37 @@ func ServerThread(orch *Orch, ctx context.Context, done func()) {
 	})
 
 	app.Post("/:node/action/:action", func(c *fiber.Ctx) error {
-		// We will need to send a request to the node to run the action
-		// and then wait for the response.
 		node := c.Params("node")
 		action := c.Params("action")
 		body := c.Body()
 		nodeConn, ok := orch.Nodes[node]
 		if !ok {
 			c.Response().SetStatusCode(404)
-			return c.SendString("Node not registered.")
+			return c.SendString(fmt.Sprintf("Node %s not registered.", node))
 		}
 
 		// Send the request
 		out, err := nodeConn.RequestAction(action, body)
-
 		if err != nil {
 			c.Response().SetStatusCode(500)
 			return c.SendString("Error sending request to node.")
+		}
+		return c.Send(out)
+	})
+
+	app.Get("/:node/data", func(c *fiber.Ctx) error {
+		node := c.Params("node")
+		body := c.Body()
+		nodeConn, ok := orch.Nodes[node]
+		if !ok {
+			c.Response().SetStatusCode(404)
+			return c.SendString(fmt.Sprintf("Node %s not registered.", node))
+		}
+
+		out, err := nodeConn.RequestData(body)
+		if err != nil {
+			c.Response().SetStatusCode(500)
+			return c.SendString("Error getting data from node.")
 		}
 		return c.Send(out)
 	})
