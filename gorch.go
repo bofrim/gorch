@@ -8,7 +8,7 @@ import (
 	"regexp"
 
 	"github.com/bofrim/gorch/node"
-	"github.com/bofrim/gorch/orch"
+	"github.com/bofrim/gorch/orchestrator"
 	"github.com/urfave/cli/v2"
 )
 
@@ -67,7 +67,7 @@ func main() {
 						},
 					},
 					&cli.StringFlag{
-						Name:     "orch",
+						Name:     "orchestrator",
 						Aliases:  []string{"o"},
 						Usage:    "Specify a main server to connect this node to",
 						Required: false,
@@ -103,7 +103,7 @@ func main() {
 						ServerAddr:  cCtx.String("host"),
 						DataDir:     absDataPath,
 						ActionsPath: absActionPath,
-						OrchAddr:    cCtx.String("orch"),
+						OrchAddr:    cCtx.String("orchestrator"),
 					}
 					fmt.Println("Gorch node running with name: ", node.Name)
 					fmt.Println("Gorch node data directory: ", node.DataDir)
@@ -113,7 +113,7 @@ func main() {
 				},
 			},
 			{
-				Name:  "orch",
+				Name:  "orchestrator",
 				Usage: "Run a central orchestration server.",
 				Flags: []cli.Flag{
 					&cli.IntFlag{
@@ -132,10 +132,10 @@ func main() {
 				},
 				Action: func(cCtx *cli.Context) error {
 					fmt.Println("Gorch orchestrator running on port: ", cCtx.Int("port"))
-					orch := orch.Orch{
+					orchestrator := orchestrator.Orchestrator{
 						Port: cCtx.Int("port"),
 					}
-					return orch.Run()
+					return orchestrator.Run()
 				},
 			},
 		},

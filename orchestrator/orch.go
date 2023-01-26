@@ -1,18 +1,18 @@
-package orch
+package orchestrator
 
 import (
 	"context"
 	"sync"
 )
 
-type Orch struct {
+type Orchestrator struct {
 	Port  int
 	Nodes map[string]*NodeConnection
 }
 
-func (orch *Orch) Run() error {
-	if orch.Nodes == nil {
-		orch.Nodes = make(map[string]*NodeConnection)
+func (orchestrator *Orchestrator) Run() error {
+	if orchestrator.Nodes == nil {
+		orchestrator.Nodes = make(map[string]*NodeConnection)
 	}
 
 	var wg sync.WaitGroup
@@ -23,9 +23,9 @@ func (orch *Orch) Run() error {
 	}
 
 	wg.Add(1)
-	go ServerThread(orch, ctx, done)
+	go ServerThread(orchestrator, ctx, done)
 	wg.Add(1)
-	go DisconnectThread(orch, ctx, done)
+	go DisconnectThread(orchestrator, ctx, done)
 
 	// Finish
 	wg.Wait()

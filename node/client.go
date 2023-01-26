@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bofrim/gorch/orch"
+	"github.com/bofrim/gorch/orchestrator"
 )
 
 type ClientState int
@@ -64,7 +64,7 @@ func ClientThread(n *Node, ctx context.Context, done func()) {
 func register(orchAddr, nodeName string, nodeAddr string, nodePort int) error {
 	// Register with the orchestrator
 	url := fmt.Sprintf("http://%s/register/", orchAddr)
-	data := orch.NodeRegistration{
+	data := orchestrator.NodeRegistration{
 		NodeName: nodeName,
 		NodeAddr: nodeAddr,
 		NodePort: nodePort,

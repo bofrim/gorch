@@ -1,4 +1,4 @@
-package orch
+package orchestrator
 
 import (
 	"context"
@@ -15,7 +15,7 @@ type NodeRegistration struct {
 	NodePort int    `json:"port"`
 }
 
-func ServerThread(orch *Orch, ctx context.Context, done func()) {
+func ServerThread(orchestrator *Orchestrator, ctx context.Context, done func()) {
 	defer done()
 
 	app := fiber.New()
@@ -36,7 +36,7 @@ func ServerThread(orch *Orch, ctx context.Context, done func()) {
 			log.Printf("Body: %s", c.Body())
 			return err
 		}
-		_, ok := orch.Nodes[r.NodeName]
+		_, ok := orchestrator.Nodes[r.NodeName]
 		if ok {
 			// Was already register
 			log.Println("Was already registered.")
@@ -47,19 +47,19 @@ func ServerThread(orch *Orch, ctx context.Context, done func()) {
 				Port:            r.NodePort,
 				LastInteraction: time.Now(),
 			}
-			orch.Nodes[r.NodeName] = &conn
+			orchestrator.Nodes[r.NodeName] = &conn
 		}
-		log.Printf("Orch now has %d nodes registered.\n", len(orch.Nodes))
+		log.Printf("Orchestrator now has %d nodes registered.\n", len(orchestrator.Nodes))
 		return nil
 	})
 	app.Post("/ping/:name", func(c *fiber.Ctx) error {
 		name := c.Params("name")
-		node, ok := orch.Nodes[name]
+		node, ok := orchestrator.Nodes[name]
 		if ok {
-			log.Printf("Orch got pinged by %s. [%s]\n", name, orch.Nodes[name].LastInteraction.String())
+			log.Printf("Orchestrator got pinged by %s. [%s]\n", name, orchestrator.Nodes[name].LastInteraction.String())
 			node.LastInteraction = time.Now()
 		} else {
-			log.Printf("Orch got pinged by %s, but it was not registered.\n", name)
+			log.Printf("Orchestrator got pinged by %s, but it was not registered.\n", name)
 			c.Response().SetStatusCode(404)
 			return c.SendString("Node not registered.")
 		}
@@ -67,20 +67,20 @@ func ServerThread(orch *Orch, ctx context.Context, done func()) {
 
 	})
 	app.Get("/nodes", func(c *fiber.Ctx) error {
-		nodes := make([]string, len(orch.Nodes))
+		nodes := make([]string, len(orchestrator.Nodes))
 		i := 0
-		for k := range orch.Nodes {
+		for k := range orchestrator.Nodes {
 			nodes[i] = k
 			i++
 		}
-		return c.JSON(orch.Nodes)
+		return c.JSON(orchestrator.Nodes)
 	})
 
 	app.Post("/:node/action/:action", func(c *fiber.Ctx) error {
 		node := c.Params("node")
 		action := c.Params("action")
 		body := c.Body()
-		nodeConn, ok := orch.Nodes[node]
+		nodeConn, ok := orchestrator.Nodes[node]
 		if !ok {
 			c.Response().SetStatusCode(404)
 			return c.SendString(fmt.Sprintf("Node %s not registered.", node))
@@ -98,7 +98,7 @@ func ServerThread(orch *Orch, ctx context.Context, done func()) {
 	app.Get("/:node/data", func(c *fiber.Ctx) error {
 		node := c.Params("node")
 		body := c.Body()
-		nodeConn, ok := orch.Nodes[node]
+		nodeConn, ok := orchestrator.Nodes[node]
 		if !ok {
 			c.Response().SetStatusCode(404)
 			return c.SendString(fmt.Sprintf("Node %s not registered.", node))
@@ -112,7 +112,7 @@ func ServerThread(orch *Orch, ctx context.Context, done func()) {
 		return c.Send(out)
 	})
 
-	err := app.Listen(fmt.Sprintf(":%d", orch.Port))
+	err := app.Listen(fmt.Sprintf(":%d", orchestrator.Port))
 	log.Println(err)
 
 }
