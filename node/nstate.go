@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,46 +12,66 @@ import (
 	"github.com/bofrim/gorch/orchestrator"
 )
 
-type ClientState int
+type NodeState struct {
+	commState NodeCommState
+	pollCount int
+}
+type NodeCommState int
 
-const ClientPollPeriod = 5 * time.Second
+const NodePollPeriod time.Duration = orchestrator.DisconnectStaleNodePeriod / 2
+const QuickPollThreshold int = 25
+const NodeQuickPollPeriod time.Duration = time.Duration(int(NodePollPeriod) / QuickPollThreshold)
 
 const (
-	Polling ClientState = iota
+	Polling NodeCommState = iota
+	QuickPolling
 	Registered
 	Disconnecting
 	Disconnected
 )
 
-func ClientThread(n *Node, ctx context.Context, done func()) {
+func NodeStateThread(n *Node, ctx context.Context, done func()) {
 	defer done()
-	n.OrchConnState = Polling
-	ticker := time.NewTicker(ClientPollPeriod)
+	n.nodeState.commState = Polling
+	ticker := time.NewTicker(NodePollPeriod)
+
+	// Attempt to register at startup to avoid waiting for the first period to elapse
+	if err := register(n.OrchAddr, n.Name, n.ServerAddr, n.ServerPort); err == nil {
+		n.nodeState.commState = Registered
+	}
+
 	for {
 		select {
 		case <-ticker.C:
-			switch n.OrchConnState {
+			switch n.nodeState.commState {
+			case QuickPolling:
+				n.nodeState.pollCount++
+				if n.nodeState.pollCount > QuickPollThreshold {
+					n.nodeState.pollCount = 0
+					n.nodeState.commState = Polling
+					ticker.Reset(NodePollPeriod)
+				}
+				fallthrough
 			case Polling:
-				log.Println("Polling...")
 				if err := register(n.OrchAddr, n.Name, n.ServerAddr, n.ServerPort); err == nil {
-					n.OrchConnState = Registered
+					n.nodeState.commState = Registered
 				}
 			case Registered:
-				log.Println("pinging")
 				if err := ping(n.OrchAddr, n.Name); err != nil {
 					log.Println("Bad ping. Going back to polling")
-					n.OrchConnState = Polling
+					n.nodeState.commState = QuickPolling
+					ticker.Reset(NodeQuickPollPeriod)
 				}
 			case Disconnecting:
 				log.Println("Disconnecting.")
 				_ = disconnect(n.OrchAddr, n.Name)
-				n.OrchConnState = Disconnected
+				n.nodeState.commState = Disconnected
 				return
 			case Disconnected:
 				log.Println("Disconnected.")
 				return
 			default:
-				n.OrchConnState = Disconnecting
+				n.nodeState.commState = Disconnecting
 			}
 
 		case <-ctx.Done():
@@ -70,7 +89,6 @@ func register(orchAddr, nodeName string, nodeAddr string, nodePort int) error {
 		NodePort: nodePort,
 	}
 	b, err := json.Marshal(data)
-	log.Printf("Register with data: %s", b)
 	if err != nil {
 		return err
 	}
@@ -89,7 +107,7 @@ func register(orchAddr, nodeName string, nodeAddr string, nodePort int) error {
 	}
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("Bad request")
-		return errors.New("request not OK")
+		return fmt.Errorf("request not OK: %d", resp.StatusCode)
 	}
 	log.Println("Registered")
 	return nil
@@ -109,16 +127,9 @@ func ping(addr, name string) error {
 		fmt.Println(err)
 		return err
 	}
-	switch resp.StatusCode {
-	case http.StatusOK:
-		// success!
-	default:
-		// Something else
-		fmt.Printf("Bad request: %s\n", resp.Status)
-		return errors.New("request not OK")
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad request: %d", resp.StatusCode)
 	}
-
-	log.Println("Pinged")
 	return nil
 }
 

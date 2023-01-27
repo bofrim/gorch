@@ -7,15 +7,15 @@ import (
 )
 
 type Node struct {
-	Name          string
-	ServerAddr    string
-	ServerPort    int
-	DataDir       string
-	Data          map[string]map[string]interface{}
-	ActionsPath   string
-	Actions       map[string]Action
-	OrchAddr      string
-	OrchConnState ClientState
+	Name        string
+	ServerAddr  string
+	ServerPort  int
+	DataDir     string
+	Data        map[string]map[string]interface{}
+	ActionsPath string
+	Actions     map[string]Action
+	OrchAddr    string
+	nodeState   NodeState
 }
 
 func (node *Node) Run() error {
@@ -46,7 +46,7 @@ func (node *Node) Run() error {
 	wg.Add(1)
 	go ServerThread(node, ctx, done)
 	wg.Add(1)
-	go ClientThread(node, ctx, done)
+	go NodeStateThread(node, ctx, done)
 
 	// Finish
 	wg.Wait()

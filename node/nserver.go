@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -23,15 +24,18 @@ func ServerThread(node *Node, ctx context.Context, done func()) {
 
 	// Status endpoint
 	app.Get("/", func(c *fiber.Ctx) error {
+		log.Println("Status Checked")
 		return c.SendString("Gorch node is up and running!")
 	})
 
 	// Endpoint for interacting with the node's data
 	dataEp := app.Group("/data")
 	dataEp.Get("/", func(c *fiber.Ctx) error {
+		log.Println("Get all data")
 		return c.JSON(node.Data)
 	})
 	dataEp.Get("/list", func(c *fiber.Ctx) error {
+		log.Println("List data")
 		keys := make([]string, len(node.Data))
 		i := 0
 		for k := range node.Data {
@@ -42,6 +46,7 @@ func ServerThread(node *Node, ctx context.Context, done func()) {
 	})
 	dataEp.Get("/list/:file", func(c *fiber.Ctx) error {
 		file := c.Params("file")
+		log.Printf("List data file: %s\n", file)
 		fileData := node.Data[file]
 		keys := make([]string, len(fileData))
 		i := 0
@@ -52,12 +57,15 @@ func ServerThread(node *Node, ctx context.Context, done func()) {
 		return c.JSON(keys)
 	})
 	dataEp.Get("/:file", func(c *fiber.Ctx) error {
-		return c.JSON(node.Data[c.Params("file")])
+		file := c.Params("file")
+		log.Printf("Get data file: %s\n", file)
+		return c.JSON(node.Data[file])
 	})
 
 	// Endpoint for running actions on the node
 	actionEp := app.Group("/action")
 	actionEp.Get("/", func(c *fiber.Ctx) error {
+		log.Println("Get available actions.")
 		// Manually marshal to pickup tag names
 		s, err := json.Marshal(node.Actions)
 		if err != nil {
@@ -67,6 +75,7 @@ func ServerThread(node *Node, ctx context.Context, done func()) {
 	})
 	actionEp.Post("/:name", func(c *fiber.Ctx) error {
 		name := c.Params("name")
+		log.Printf("Run action %s\n", name)
 		var body map[string]string
 		err := json.Unmarshal(c.Body(), &body)
 		if err != nil {
@@ -81,6 +90,7 @@ func ServerThread(node *Node, ctx context.Context, done func()) {
 		return c.SendString(out)
 	})
 	app.Post(("/reload/"), func(c *fiber.Ctx) error {
+		log.Printf("Reload actions\n")
 		if _, err := os.Stat(node.ActionsPath); os.IsNotExist(err) {
 			return c.SendStatus(fiber.StatusNotFound)
 		}

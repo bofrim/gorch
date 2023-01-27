@@ -3,7 +3,6 @@ package orchestrator
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,7 +10,7 @@ import (
 	"time"
 )
 
-const DisconnectionPeriod = 10 * time.Second
+const DisconnectStaleNodePeriod = 10 * time.Second
 
 type NodeConnection struct {
 	Name            string
@@ -21,12 +20,7 @@ type NodeConnection struct {
 }
 
 func (nc *NodeConnection) RequestAction(actionName string, reqBody []byte) ([]byte, error) {
-	log.Printf("Address: %s", nc.Address)
-	log.Printf("Port: %d", nc.Port)
-	log.Printf("Action: %s", actionName)
 	url := fmt.Sprintf("http://%s:%d/action/%s", nc.Address, nc.Port, actionName)
-	log.Printf("Sending action request to %s at address: %s", nc.Name, url)
-
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		fmt.Println(err)
@@ -39,13 +33,9 @@ func (nc *NodeConnection) RequestAction(actionName string, reqBody []byte) ([]by
 		fmt.Println(err)
 		return nil, err
 	}
-	switch resp.StatusCode {
-	case http.StatusOK:
-		// success!
-	default:
-		// Something else
+	if resp.StatusCode != http.StatusOK {
 		fmt.Printf("Bad request: %s\n", resp.Status)
-		return nil, errors.New("request not OK")
+		return nil, fmt.Errorf("request not OK: %d", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -53,16 +43,13 @@ func (nc *NodeConnection) RequestAction(actionName string, reqBody []byte) ([]by
 		return nil, err
 	}
 
-	log.Printf("Finished action %s", actionName)
-	log.Printf("The response was: %s", body)
-
 	return body, nil
 
 }
 
-func (nc *NodeConnection) RequestData(reqBody []byte) ([]byte, error) {
-	url := fmt.Sprintf("http://%s:%d/data", nc.Address, nc.Port)
-	log.Printf("Sending action request to %s at address: %s", nc.Name, url)
+func (nc *NodeConnection) GetRequest(reqBody []byte, path string) ([]byte, error) {
+	url := fmt.Sprintf("http://%s:%d/%s", nc.Address, nc.Port, path)
+	log.Printf("Get request for: %s", url)
 	req, err := http.NewRequest("GET", url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		fmt.Println(err)
@@ -75,13 +62,9 @@ func (nc *NodeConnection) RequestData(reqBody []byte) ([]byte, error) {
 		fmt.Println(err)
 		return nil, err
 	}
-	switch resp.StatusCode {
-	case http.StatusOK:
-		// success!
-	default:
-		// Something else
+	if resp.StatusCode != http.StatusOK {
 		fmt.Printf("Bad request: %s\n", resp.Status)
-		return nil, errors.New("request not OK")
+		return nil, fmt.Errorf("request not OK: %d", resp.StatusCode)
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
@@ -89,18 +72,17 @@ func (nc *NodeConnection) RequestData(reqBody []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	log.Printf("The response was: %s", respBody)
 	return respBody, nil
 }
 
 func DisconnectThread(orchestrator *Orchestrator, ctx context.Context, done func()) {
-	ticker := time.NewTicker(DisconnectionPeriod)
+	ticker := time.NewTicker(DisconnectStaleNodePeriod)
 	for {
 		select {
 		case <-ticker.C:
-			// Kick any nodes that we haven't heard from in the last DisconnectionPeriod
+			// Kick any nodes that we haven't heard from in the last DisconnectStaleNodePeriod
 			for name, n := range orchestrator.Nodes {
-				if n.LastInteraction.Before(time.Now().Add(-1 * DisconnectionPeriod)) {
+				if n.LastInteraction.Before(time.Now().Add(-1 * DisconnectStaleNodePeriod)) {
 					delete(orchestrator.Nodes, name)
 					log.Printf("Kicked out node: %s\n", name)
 				}

@@ -56,7 +56,6 @@ func ServerThread(orchestrator *Orchestrator, ctx context.Context, done func()) 
 		name := c.Params("name")
 		node, ok := orchestrator.Nodes[name]
 		if ok {
-			log.Printf("Orchestrator got pinged by %s. [%s]\n", name, orchestrator.Nodes[name].LastInteraction.String())
 			node.LastInteraction = time.Now()
 		} else {
 			log.Printf("Orchestrator got pinged by %s, but it was not registered.\n", name)
@@ -80,6 +79,8 @@ func ServerThread(orchestrator *Orchestrator, ctx context.Context, done func()) 
 		node := c.Params("node")
 		action := c.Params("action")
 		body := c.Body()
+		log.Printf("Running action [%s] on node [%s]", action, node)
+
 		nodeConn, ok := orchestrator.Nodes[node]
 		if !ok {
 			c.Response().SetStatusCode(404)
@@ -95,8 +96,10 @@ func ServerThread(orchestrator *Orchestrator, ctx context.Context, done func()) 
 		return c.Send(out)
 	})
 
-	app.Get("/:node/data", func(c *fiber.Ctx) error {
+	// Forward a get request to a node
+	app.Get("/:node/*", func(c *fiber.Ctx) error {
 		node := c.Params("node")
+		path := c.Params("*")
 		body := c.Body()
 		nodeConn, ok := orchestrator.Nodes[node]
 		if !ok {
@@ -104,10 +107,10 @@ func ServerThread(orchestrator *Orchestrator, ctx context.Context, done func()) 
 			return c.SendString(fmt.Sprintf("Node %s not registered.", node))
 		}
 
-		out, err := nodeConn.RequestData(body)
+		out, err := nodeConn.GetRequest(body, path)
 		if err != nil {
 			c.Response().SetStatusCode(500)
-			return c.SendString("Error getting data from node.")
+			return c.SendString(fmt.Sprintf("Error getting data from node: %s", err.Error()))
 		}
 		return c.Send(out)
 	})
