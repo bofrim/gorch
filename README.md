@@ -28,7 +28,7 @@ go run gorch.go
 ## TODO
 
 * [ ] Add a way to specify a configuration file for a node
-* [ ] Add a way to run periodic actions on a node
-* [ ] Add streaming output for actions
+* [ ] Add a way to run periodic actions on a node (should be an optional configuration option for a node) Figure out what to do with the output of the action.
+* [ ] Add streaming output for actions (could be in the form of a web hook; i.e. a user registers a webhook then when they call that action, they get a POST request with the output of each line from the action's stdout)
 * [ ] Setup web hooks for data changes or events related to actions
 * [ ] Setup centralized logging for nodes so logs will be accessible through the orchestrator even if the node is offline
