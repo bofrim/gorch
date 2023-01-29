@@ -9,6 +9,7 @@ import (
 
 	"github.com/bofrim/gorch/node"
 	"github.com/bofrim/gorch/orchestrator"
+	"github.com/bofrim/gorch/user"
 	"github.com/urfave/cli/v2"
 )
 
@@ -25,7 +26,6 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.IntFlag{
 						Name:        "port",
-						Aliases:     []string{"p"},
 						Usage:       "Specify a port for the node to serve on",
 						Value:       8321,
 						DefaultText: "8321",
@@ -37,14 +37,12 @@ func main() {
 						},
 					},
 					&cli.StringFlag{
-						Name:    "host",
-						Aliases: []string{"H"},
-						Usage:   "Specify the address the node will be accessible at",
-						Value:   "127.0.0.1",
+						Name:  "host",
+						Usage: "Specify the address the node will be accessible at",
+						Value: "127.0.0.1",
 					},
 					&cli.StringFlag{
 						Name:     "data",
-						Aliases:  []string{"d"},
 						Usage:    "Specify a directory to use as the node's data directory",
 						Required: true,
 						Action: func(ctx *cli.Context, v string) error {
@@ -56,7 +54,6 @@ func main() {
 					},
 					&cli.StringFlag{
 						Name:     "actions",
-						Aliases:  []string{"a"},
 						Usage:    "Specify a path to a file containing the node's actions",
 						Required: false,
 						Action: func(ctx *cli.Context, v string) error {
@@ -68,13 +65,11 @@ func main() {
 					},
 					&cli.StringFlag{
 						Name:     "orchestrator",
-						Aliases:  []string{"o"},
 						Usage:    "Specify a main server to connect this node to",
 						Required: false,
 					},
 					&cli.StringFlag{
 						Name:        "name",
-						Aliases:     []string{"n"},
 						Usage:       "Specify a name of the node.",
 						Value:       "Anon",
 						DefaultText: "Anon",
@@ -118,7 +113,6 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.IntFlag{
 						Name:        "port",
-						Aliases:     []string{"p"},
 						Usage:       "Specify a port for the orchestrator to serve on",
 						Value:       8322,
 						DefaultText: "8322",
@@ -138,6 +132,7 @@ func main() {
 					return orchestrator.Run()
 				},
 			},
+			user.GetCliCommand(),
 		},
 	}
 

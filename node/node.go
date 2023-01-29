@@ -44,7 +44,7 @@ func (node *Node) Run() error {
 	wg.Add(1)
 	go MonitorThread(node, ctx, done)
 	wg.Add(1)
-	go ServerThread(node, ctx, done)
+	go NServerThread(node, ctx, done)
 	wg.Add(1)
 	go NodeStateThread(node, ctx, done)
 

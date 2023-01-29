@@ -12,7 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func ServerThread(node *Node, ctx context.Context, done func()) {
+func NServerThread(node *Node, ctx context.Context, done func()) {
 	defer done()
 
 	// Create a new app
@@ -34,7 +34,14 @@ func ServerThread(node *Node, ctx context.Context, done func()) {
 		log.Println("Get all data")
 		return c.JSON(node.Data)
 	})
-	dataEp.Get("/list", func(c *fiber.Ctx) error {
+	dataEp.Get("/:file", func(c *fiber.Ctx) error {
+		file := c.Params("file")
+		log.Printf("Get data file: %s\n", file)
+		return c.JSON(node.Data[file])
+	})
+
+	listEp := app.Group("/list")
+	listEp.Get("/", func(c *fiber.Ctx) error {
 		log.Println("List data")
 		keys := make([]string, len(node.Data))
 		i := 0
@@ -44,7 +51,7 @@ func ServerThread(node *Node, ctx context.Context, done func()) {
 		}
 		return c.JSON(keys)
 	})
-	dataEp.Get("/list/:file", func(c *fiber.Ctx) error {
+	listEp.Get("/:file", func(c *fiber.Ctx) error {
 		file := c.Params("file")
 		log.Printf("List data file: %s\n", file)
 		fileData := node.Data[file]
@@ -55,11 +62,6 @@ func ServerThread(node *Node, ctx context.Context, done func()) {
 			i++
 		}
 		return c.JSON(keys)
-	})
-	dataEp.Get("/:file", func(c *fiber.Ctx) error {
-		file := c.Params("file")
-		log.Printf("Get data file: %s\n", file)
-		return c.JSON(node.Data[file])
 	})
 
 	// Endpoint for running actions on the node
@@ -76,10 +78,18 @@ func ServerThread(node *Node, ctx context.Context, done func()) {
 	actionEp.Post("/:name", func(c *fiber.Ctx) error {
 		name := c.Params("name")
 		log.Printf("Run action %s\n", name)
+		log.Printf("Body: %s\n", c.Body())
 		var body map[string]string
-		err := json.Unmarshal(c.Body(), &body)
-		if err != nil {
-			return c.Status(http.StatusBadRequest).Send([]byte(err.Error()))
+		if c.Body() != nil {
+			err := json.Unmarshal(c.Body(), &body)
+			log.Printf("Action body %+v\n", body)
+			if err != nil {
+				log.Printf("Error parsing body: %s\n", err.Error())
+				return c.Status(http.StatusBadRequest).Send([]byte(err.Error()))
+			}
+		} else {
+			log.Printf("No body\n")
+			body = map[string]string{}
 		}
 		action := node.Actions[name]
 		outputs, err := action.Run(body)

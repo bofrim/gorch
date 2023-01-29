@@ -15,7 +15,7 @@ type NodeRegistration struct {
 	NodePort int    `json:"port"`
 }
 
-func ServerThread(orchestrator *Orchestrator, ctx context.Context, done func()) {
+func OServerThread(orchestrator *Orchestrator, ctx context.Context, done func()) {
 	defer done()
 
 	app := fiber.New()
@@ -75,47 +75,31 @@ func ServerThread(orchestrator *Orchestrator, ctx context.Context, done func()) 
 		return c.JSON(orchestrator.Nodes)
 	})
 
-	app.Post("/:node/action/:action", func(c *fiber.Ctx) error {
-		node := c.Params("node")
-		action := c.Params("action")
-		body := c.Body()
-		log.Printf("Running action [%s] on node [%s]", action, node)
-
-		nodeConn, ok := orchestrator.Nodes[node]
-		if !ok {
-			c.Response().SetStatusCode(404)
-			return c.SendString(fmt.Sprintf("Node %s not registered.", node))
-		}
-
-		// Send the request
-		out, err := nodeConn.RequestAction(action, body)
-		if err != nil {
-			c.Response().SetStatusCode(500)
-			return c.SendString("Error sending request to node.")
-		}
-		return c.Send(out)
-	})
-
 	// Forward a get request to a node
 	app.Get("/:node/*", func(c *fiber.Ctx) error {
 		node := c.Params("node")
-		path := c.Params("*")
-		body := c.Body()
 		nodeConn, ok := orchestrator.Nodes[node]
 		if !ok {
 			c.Response().SetStatusCode(404)
 			return c.SendString(fmt.Sprintf("Node %s not registered.", node))
 		}
 
-		out, err := nodeConn.GetRequest(body, path)
-		if err != nil {
-			c.Response().SetStatusCode(500)
-			return c.SendString(fmt.Sprintf("Error getting data from node: %s", err.Error()))
+		nodeUrl := fmt.Sprintf("http://%s:%d/%s", nodeConn.Address, nodeConn.Port, c.Params("*"))
+		return c.Redirect(nodeUrl, fiber.StatusTemporaryRedirect)
+	})
+
+	app.Post("/:node/*", func(c *fiber.Ctx) error {
+		node := c.Params("node")
+		nodeConn, ok := orchestrator.Nodes[node]
+		if !ok {
+			c.Response().SetStatusCode(404)
+			return c.SendString(fmt.Sprintf("Node %s not registered.", node))
 		}
-		return c.Send(out)
+
+		nodeUrl := fmt.Sprintf("http://%s:%d/%s", nodeConn.Address, nodeConn.Port, c.Params("*"))
+		return c.Redirect(nodeUrl, fiber.StatusTemporaryRedirect)
 	})
 
 	err := app.Listen(fmt.Sprintf(":%d", orchestrator.Port))
 	log.Println(err)
-
 }

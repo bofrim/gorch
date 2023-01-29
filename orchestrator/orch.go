@@ -23,7 +23,7 @@ func (orchestrator *Orchestrator) Run() error {
 	}
 
 	wg.Add(1)
-	go ServerThread(orchestrator, ctx, done)
+	go OServerThread(orchestrator, ctx, done)
 	wg.Add(1)
 	go DisconnectThread(orchestrator, ctx, done)
 
