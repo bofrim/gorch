@@ -98,18 +98,19 @@ func register(orchAddr, nodeName string, nodeAddr string, nodePort int) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Close = true
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("Bad request")
-		return fmt.Errorf("request not OK: %d", resp.StatusCode)
+		err := fmt.Errorf("request not OK: %d", resp.StatusCode)
+		log.Println(err.Error())
+		return err
 	}
-	log.Println("Registered")
+	log.Printf("Registered as [%s (%s:%d)] to [%s]", nodeName, nodeAddr, nodePort, orchAddr)
 	return nil
 }
 
@@ -117,14 +118,12 @@ func ping(addr, name string) error {
 	url := fmt.Sprintf("http://%s/ping/%s", addr, name)
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	if resp.StatusCode != http.StatusOK {

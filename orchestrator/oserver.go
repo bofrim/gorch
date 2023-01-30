@@ -75,7 +75,6 @@ func OServerThread(orchestrator *Orchestrator, ctx context.Context, done func())
 		return c.JSON(orchestrator.Nodes)
 	})
 
-	// Forward a get request to a node
 	app.Get("/:node/*", func(c *fiber.Ctx) error {
 		node := c.Params("node")
 		nodeConn, ok := orchestrator.Nodes[node]

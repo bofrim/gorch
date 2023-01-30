@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -77,30 +78,41 @@ func NServerThread(node *Node, ctx context.Context, done func()) {
 	})
 	actionEp.Post("/:name", func(c *fiber.Ctx) error {
 		name := c.Params("name")
-		log.Printf("Run action %s\n", name)
-		log.Printf("Body: %s\n", c.Body())
 		var body map[string]string
 		if c.Body() != nil {
 			err := json.Unmarshal(c.Body(), &body)
-			log.Printf("Action body %+v\n", body)
 			if err != nil {
 				log.Printf("Error parsing body: %s\n", err.Error())
 				return c.Status(http.StatusBadRequest).Send([]byte(err.Error()))
 			}
 		} else {
-			log.Printf("No body\n")
 			body = map[string]string{}
 		}
 		action := node.Actions[name]
-		outputs, err := action.Run(body)
-		if err != nil {
-			return err
+
+		var out string
+		if body["stream_addr"] != "" && body["stream_port"] != "" {
+			sAddr := body["stream_addr"]
+			if sAddr == "loopback" {
+				sAddr = c.IP()
+			}
+			sPort, convErr := strconv.Atoi(body["stream_port"])
+			if convErr != nil {
+				return c.Status(http.StatusBadRequest).Send([]byte("Invalid stream port"))
+			}
+			go action.RunStreamed(sAddr, sPort, body)
+			out = fmt.Sprintf("[%s] Streaming to %s:%d", node.Name, sAddr, sPort)
+		} else {
+			outputs, err := action.Run(body)
+			if err != nil {
+				return err
+			}
+			out = strings.Join(outputs, "\n")
 		}
-		out := strings.Join(outputs, "\n")
+
 		return c.SendString(out)
 	})
 	app.Post(("/reload/"), func(c *fiber.Ctx) error {
-		log.Printf("Reload actions\n")
 		if _, err := os.Stat(node.ActionsPath); os.IsNotExist(err) {
 			return c.SendStatus(fiber.StatusNotFound)
 		}

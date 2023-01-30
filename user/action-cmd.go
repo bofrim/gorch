@@ -47,7 +47,6 @@ var actionCommand = cli.Command{
 			Name:  "data",
 			Usage: "Pass data in key=value format",
 			Action: func(ctx *cli.Context, v []string) error {
-				fmt.Printf("action called: %v\n", v)
 				// check if the data is in key=value format
 				dataRegex := regexp.MustCompile(dataRegexPattern)
 				data := make(map[string]string)
@@ -63,12 +62,24 @@ var actionCommand = cli.Command{
 				return nil
 			},
 		},
+		&cli.IntFlag{
+			Name:  "stream-port",
+			Usage: "A port to use to stream the response from the action.",
+			Value: 0,
+			Action: func(ctx *cli.Context, v int) error {
+				if v >= 65536 {
+					return fmt.Errorf("flag stream-port value %v out of range [0-65535]", v)
+				}
+				return nil
+			},
+		},
 	},
 	Action: func(ctx *cli.Context) error {
 		addr := ctx.String("host")
 		port := ctx.Int("port")
 		action := ctx.String("action")
 		node := ctx.String("node")
+		streamPort := ctx.Int("stream-port")
 
 		// Parse data
 		data := make(map[string]string)
@@ -82,14 +93,16 @@ var actionCommand = cli.Command{
 			data[strings.Split(d, "=")[0]] = strings.Split(d, "=")[1]
 		}
 
-		fmt.Printf("Action: %s, Node: %s, Data: %s\n", action, node, data)
-		raw, err := RunAction(addr, port, node, action, data)
-		if err != nil {
-			fmt.Printf("Action Error: %v", err)
-			return err
+		var runErr error
+		if streamPort != 0 {
+			runErr = StreamAction(addr, port, node, streamPort, action, data)
+		} else {
+			runErr = RunAction(addr, port, node, action, data)
 		}
-
-		fmt.Printf("Action Response:\n%s\n", raw)
+		if runErr != nil {
+			fmt.Printf("Action Error: %v", runErr)
+			return runErr
+		}
 		return nil
 	},
 }

@@ -85,13 +85,11 @@ func main() {
 					},
 				},
 				Action: func(cCtx *cli.Context) error {
-					fmt.Println("Gorch node running on port: ", cCtx.Int("port"))
 					absDataPath, _ := filepath.Abs(cCtx.String("data"))
 					absActionPath := ""
 					if cCtx.String("actions") != "" {
 						absActionPath, _ = filepath.Abs(cCtx.String("actions"))
 					}
-
 					node := node.Node{
 						Name:        cCtx.String("name"),
 						ServerPort:  cCtx.Int("port"),
@@ -100,10 +98,6 @@ func main() {
 						ActionsPath: absActionPath,
 						OrchAddr:    cCtx.String("orchestrator"),
 					}
-					fmt.Println("Gorch node running with name: ", node.Name)
-					fmt.Println("Gorch node data directory: ", node.DataDir)
-					fmt.Println("Gorch node actions path: ", node.ActionsPath)
-					fmt.Println("Gorch orchestrator url: ", node.OrchAddr)
 					return node.Run()
 				},
 			},

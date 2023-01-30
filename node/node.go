@@ -48,7 +48,6 @@ func (node *Node) Run() error {
 	wg.Add(1)
 	go NodeStateThread(node, ctx, done)
 
-	// Finish
 	wg.Wait()
 	cancel()
 	return nil

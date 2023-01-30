@@ -7,9 +7,13 @@ import (
 	"log"
 	"os/exec"
 	"strings"
+	"time"
 
+	"github.com/bofrim/gorch/hook"
 	"gopkg.in/yaml.v3"
 )
+
+const StreamTeardownDelay = 250 * time.Millisecond
 
 type Action struct {
 	Name        string   `yaml:"name" json:"name"`
@@ -56,6 +60,31 @@ func (a Action) Run(params map[string]string) ([]string, error) {
 
 	}
 	return results, nil
+}
+
+func (a Action) RunStreamed(addr string, port int, params map[string]string) error {
+	commands, err := a.BuildCommands(params)
+	if err != nil {
+		return err
+	}
+
+	hc := hook.NewHookClient(addr, port)
+	go hc.Start()
+	defer hc.Stop()
+
+	for _, c := range commands {
+		args := strings.Fields(c)
+		cmd := exec.Command(args[0], args[1:]...)
+		out, err := cmd.Output()
+		if err != nil {
+			return err
+		}
+		if err := hc.Send(out); err != nil {
+			return err
+		}
+	}
+	time.Sleep(StreamTeardownDelay)
+	return nil
 }
 
 func loadActions(filePath string) (map[string]Action, error) {

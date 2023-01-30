@@ -27,7 +27,6 @@ func (orchestrator *Orchestrator) Run() error {
 	wg.Add(1)
 	go DisconnectThread(orchestrator, ctx, done)
 
-	// Finish
 	wg.Wait()
 	cancel()
 	return nil
