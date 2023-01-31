@@ -22,5 +22,6 @@ require (
 	github.com/valyala/fasthttp v1.43.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
+	golang.org/x/exp v0.0.0-20230131120322-dfa7d7a641b0 // indirect
 	golang.org/x/sys v0.2.0 // indirect
 )

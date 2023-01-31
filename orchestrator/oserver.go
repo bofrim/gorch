@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"golang.org/x/exp/slog"
 )
 
 type NodeRegistration struct {
@@ -15,7 +16,7 @@ type NodeRegistration struct {
 	NodePort int    `json:"port"`
 }
 
-func OServerThread(orchestrator *Orchestrator, ctx context.Context, done func()) {
+func OServerThread(orchestrator *Orchestrator, ctx context.Context, logger *slog.Logger, done func()) {
 	defer done()
 
 	app := fiber.New()

@@ -117,11 +117,17 @@ func main() {
 							return nil
 						},
 					},
+					&cli.StringFlag{
+						Name:     "log",
+						Usage:    "Specify a path to a file to log to. If not specified, logs will be printed to stdout",
+						Required: false,
+					},
 				},
 				Action: func(cCtx *cli.Context) error {
 					fmt.Println("Gorch orchestrator running on port: ", cCtx.Int("port"))
 					orchestrator := orchestrator.Orchestrator{
-						Port: cCtx.Int("port"),
+						Port:    cCtx.Int("port"),
+						LogFile: cCtx.String("log"),
 					}
 					return orchestrator.Run()
 				},

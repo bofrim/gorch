@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"golang.org/x/exp/slog"
 )
 
 const DisconnectStaleNodePeriod = 10 * time.Second
@@ -75,7 +77,7 @@ func (nc *NodeConnection) GetRequest(reqBody []byte, path string) ([]byte, error
 	return respBody, nil
 }
 
-func DisconnectThread(orchestrator *Orchestrator, ctx context.Context, done func()) {
+func DisconnectThread(orchestrator *Orchestrator, ctx context.Context, logger *slog.Logger, done func()) {
 	ticker := time.NewTicker(DisconnectStaleNodePeriod)
 	for {
 		select {
@@ -84,7 +86,7 @@ func DisconnectThread(orchestrator *Orchestrator, ctx context.Context, done func
 			for name, n := range orchestrator.Nodes {
 				if n.LastInteraction.Before(time.Now().Add(-1 * DisconnectStaleNodePeriod)) {
 					delete(orchestrator.Nodes, name)
-					log.Printf("Kicked out node: %s\n", name)
+					logger.Info(fmt.Sprintf("Stale node: %s", name), slog.Int("num_nodes", len(orchestrator.Nodes)))
 				}
 			}
 		case <-ctx.Done():
