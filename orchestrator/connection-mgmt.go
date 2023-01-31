@@ -86,7 +86,10 @@ func DisconnectThread(orchestrator *Orchestrator, ctx context.Context, logger *s
 			for name, n := range orchestrator.Nodes {
 				if n.LastInteraction.Before(time.Now().Add(-1 * DisconnectStaleNodePeriod)) {
 					delete(orchestrator.Nodes, name)
-					logger.Info(fmt.Sprintf("Stale node: %s", name), slog.Int("num_nodes", len(orchestrator.Nodes)))
+					logger.Info("Stale node.",
+						slog.String("node", name),
+						slog.Int("num_nodes", len(orchestrator.Nodes)),
+					)
 				}
 			}
 		case <-ctx.Done():

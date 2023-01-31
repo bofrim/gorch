@@ -39,8 +39,11 @@ func OServerThread(orchestrator *Orchestrator, ctx context.Context, logger *slog
 		}
 		_, ok := orchestrator.Nodes[r.NodeName]
 		if ok {
-			// Was already register
-			log.Println("Was already registered.")
+			logger.Info("Node already registered.",
+				slog.String("node", r.NodeName),
+				slog.Int("num_nodes", len(orchestrator.Nodes)),
+			)
+			return nil
 		} else {
 			conn := NodeConnection{
 				Name:            r.NodeName,
@@ -49,9 +52,13 @@ func OServerThread(orchestrator *Orchestrator, ctx context.Context, logger *slog
 				LastInteraction: time.Now(),
 			}
 			orchestrator.Nodes[r.NodeName] = &conn
+			log.Printf("Orchestrator now has %d nodes registered.\n", len(orchestrator.Nodes))
+			logger.Info("Registered node.",
+				slog.String("node", r.NodeName),
+				slog.Int("num_nodes", len(orchestrator.Nodes)),
+			)
+			return nil
 		}
-		log.Printf("Orchestrator now has %d nodes registered.\n", len(orchestrator.Nodes))
-		return nil
 	})
 	app.Post("/ping/:name", func(c *fiber.Ctx) error {
 		name := c.Params("name")
