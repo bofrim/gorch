@@ -15,14 +15,92 @@ Drop json files into your node's data directory and gorch will serve them for yo
 
 Gorch is also able to run remote actions on your nodes. Specify a configuration file when starting your node and gorch will provide an interface for executing those actions.
 
-## Installation
-
-### From source
+## Building
 
 ```bash
 git clone https://github.com/bofrim/gorch
 cd gorch
-go run gorch.go
+go build -o gorch gorch.go
+```
+
+## Usage
+
+### Running an orchestrator
+
+```bash
+./gorch orchestrator \
+  --port 8322 \
+  --log /some/path/to/gorch_log.txt # optional
+```
+
+### Running a node
+
+```bash
+./gorch node \        
+  --data /some/path/to/data_dir \
+  --actions /some/path/to/actions.yaml \
+  --name cool_node_1 \
+  --orchestrator "127.0.0.1:8322"
+```
+
+### Running user operations
+
+```bash
+# Get all the data from a node
+./gorch.go user data \
+  --host 127.0.0.1 \
+  --port 8322
+  --node cool_node_1 \
+
+# Get a specific file from a node
+./gorch user data \
+  --host 127.0.0.1 \
+  --port 8322 \
+  --node cool_node_1 \
+  --path asdf
+
+# Run an action on a node
+./gorch user action \
+  --host 127.0.0.1 \
+  --port 8322 \
+  --node cool_node_1 \
+  --action hello \
+  --data message=world \
+
+# Run an action on a node and stream output
+./gorch user action \
+  --node cool_node_1 \
+  --action sleep \
+  --host 127.0.0.1 \
+  --port 8322 \
+  --data time=5 \
+```
+
+## Setting up an actions file
+
+```yaml
+# actions.yaml
+
+"list":
+  description: "List the contents of a directory"
+  params: []
+  commands:
+    - "ls"
+
+"hello":
+  description: "Print a message"
+  params: ["message", "other"]
+  commands:
+    - "echo {{.message}}"
+    - "echo {{.other}}"
+
+"sleep":
+  description: "Send a message, sleep, then send another message"
+  params: ["time"]
+  commands:
+    - "date"
+    - "sleep {{.time}}"
+    - "date"
 ```
 
 ## TODO
