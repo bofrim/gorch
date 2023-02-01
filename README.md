@@ -47,7 +47,7 @@ go build -o gorch gorch.go
 
 ```bash
 # Get all the data from a node
-./gorch.go user data \
+./gorch user data \
   --host 127.0.0.1 \
   --port 8322
   --node cool_node_1 \
