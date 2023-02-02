@@ -14,22 +14,10 @@ var infoCommand = cli.Command{
 	Usage: "Get info about the orchestrator and its nodes",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
-			Name:        "host",
+			Name:        "orchestrator",
 			Usage:       "Specify the address of the gorch orchestrator",
-			Value:       "127.0.0.1",
-			DefaultText: "localhost",
-		},
-		&cli.IntFlag{
-			Name:        "port",
-			Usage:       "Specify the port of the gorch system",
-			Value:       8322,
-			DefaultText: "8322",
-			Action: func(ctx *cli.Context, v int) error {
-				if v >= 65536 {
-					return fmt.Errorf("flag port value %v out of range [0-65535]", v)
-				}
-				return nil
-			},
+			Value:       "127.0.0.1:8322",
+			DefaultText: "localhost:8322",
 		},
 		&cli.BoolFlag{
 			Name:    "json",
@@ -39,7 +27,7 @@ var infoCommand = cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
-		raw, err := GetNodes(c.String("host"), c.Int("port"))
+		raw, err := GetNodes(c.String("orchestrator"))
 		if err != nil {
 			fmt.Printf("Request Error: %s", err)
 			return err

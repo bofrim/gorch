@@ -46,34 +46,38 @@ go build -o gorch gorch.go
 ### Running user operations
 
 ```bash
+# Get info about the orchestrator
+./gorch user info \
+  --orchestrator "127.0.0.1:8322"
+
 # Get all the data from a node
 ./gorch user data \
-  --host 127.0.0.1 \
-  --port 8322
+  --orchestrator "127.0.0.1:8322" \
   --node cool_node_1 \
+  --json # optional
 
-# Get a specific file from a node
+# Get a specific json file from a node
 ./gorch user data \
-  --host 127.0.0.1 \
-  --port 8322 \
+  --orchestrator "127.0.0.1:8322" \
   --node cool_node_1 \
-  --path asdf
+  --path asdf \
+  --json # optional
 
 # Run an action on a node
 ./gorch user action \
-  --host 127.0.0.1 \
-  --port 8322 \
+  --orchestrator "127.0.0.1:8322" \
   --node cool_node_1 \
   --action hello \
-  --data message=world \
+  --data message=hello \
+  --data other=world
 
 # Run an action on a node and stream output
 ./gorch user action \
+  --orchestrator "127.0.0.1:8322" \
   --node cool_node_1 \
   --action sleep \
-  --host 127.0.0.1 \
-  --port 8322 \
   --data time=5 \
+  --stream-port 8323
 ```
 
 ## Setting up an actions file
@@ -109,3 +113,4 @@ go build -o gorch gorch.go
 * [ ] Add a way to run periodic actions on a node (should be an optional configuration option for a node) Figure out what to do with the output of the action.
 * [ ] Setup web hooks for data changes or events related to actions
 * [ ] Setup centralized logging for nodes so logs will be accessible through the orchestrator even if the node is offline
+* [ ] Add a user command to stream logs from either the orchestrator or a specific node

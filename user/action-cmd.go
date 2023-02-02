@@ -16,6 +16,12 @@ var actionCommand = cli.Command{
 	ArgsUsage: "node action [options]",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
+			Name:        "orchestrator",
+			Usage:       "Specify the address of the gorch orchestrator",
+			Value:       "127.0.0.1:8322",
+			DefaultText: "localhost:8322",
+		},
+		&cli.StringFlag{
 			Name:     "node",
 			Usage:    "Specify the node to perform the action on.",
 			Required: true,
@@ -24,24 +30,6 @@ var actionCommand = cli.Command{
 			Name:     "action",
 			Usage:    "Specify the action to perform on the node.",
 			Required: true,
-		},
-		&cli.StringFlag{
-			Name:        "host",
-			Usage:       "Specify the address of the orchestrator.",
-			Value:       "127.0.0.1",
-			DefaultText: "localhost",
-		},
-		&cli.IntFlag{
-			Name:        "port",
-			Usage:       "Specify the port of the orchestrator.",
-			Value:       8322,
-			DefaultText: "8322",
-			Action: func(ctx *cli.Context, v int) error {
-				if v >= 65536 {
-					return fmt.Errorf("flag port value %v out of range [0-65535]", v)
-				}
-				return nil
-			},
 		},
 		&cli.StringSliceFlag{
 			Name:  "data",
@@ -75,8 +63,7 @@ var actionCommand = cli.Command{
 		},
 	},
 	Action: func(ctx *cli.Context) error {
-		addr := ctx.String("host")
-		port := ctx.Int("port")
+		addr := ctx.String("orchestrator")
 		action := ctx.String("action")
 		node := ctx.String("node")
 		streamPort := ctx.Int("stream-port")
@@ -95,9 +82,9 @@ var actionCommand = cli.Command{
 
 		var runErr error
 		if streamPort != 0 {
-			runErr = StreamAction(addr, port, node, streamPort, action, data)
+			runErr = StreamAction(addr, node, streamPort, action, data)
 		} else {
-			runErr = RunAction(addr, port, node, action, data)
+			runErr = RunAction(addr, node, action, data)
 		}
 		if runErr != nil {
 			fmt.Printf("Action Error: %v", runErr)

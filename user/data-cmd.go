@@ -14,6 +14,12 @@ var dataRequestCommand = cli.Command{
 	Usage: "Request data from a node.",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
+			Name:        "orchestrator",
+			Usage:       "Specify the address of the gorch orchestrator",
+			Value:       "127.0.0.1:8322",
+			DefaultText: "localhost:8322",
+		},
+		&cli.StringFlag{
 			Name:     "node",
 			Usage:    "Specify the node to request data from.",
 			Required: true,
@@ -24,24 +30,6 @@ var dataRequestCommand = cli.Command{
 			Value:       "",
 			DefaultText: "all data",
 		},
-		&cli.StringFlag{
-			Name:        "host",
-			Usage:       "Specify the address the node will be accessible at",
-			Value:       "127.0.0.1",
-			DefaultText: "localhost",
-		},
-		&cli.IntFlag{
-			Name:        "port",
-			Usage:       "Specify a port for the node to serve on",
-			Value:       8322,
-			DefaultText: "8322",
-			Action: func(ctx *cli.Context, v int) error {
-				if v >= 65536 {
-					return fmt.Errorf("flag port value %v out of range [0-65535]", v)
-				}
-				return nil
-			},
-		},
 		&cli.BoolFlag{
 			Name:  "json",
 			Usage: "Specify if the output should be in JSON format.",
@@ -50,7 +38,7 @@ var dataRequestCommand = cli.Command{
 	},
 	Action: func(ctx *cli.Context) error {
 		// Send the request
-		raw, err := RequestData(ctx.String("host"), ctx.Int("port"), ctx.String("node"), ctx.String("path"))
+		raw, err := RequestData(ctx.String("orchestrator"), ctx.String("node"), ctx.String("path"))
 		if err != nil {
 			log.Printf("error requesting data: %v", err)
 			return err
@@ -95,27 +83,15 @@ var dataListCommand = cli.Command{
 	Usage: "List the data available from a node.",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
+			Name:        "orchestrator",
+			Usage:       "Specify the address of the gorch orchestrator",
+			Value:       "127.0.0.1:8322",
+			DefaultText: "localhost:8322",
+		},
+		&cli.StringFlag{
 			Name:     "node",
 			Usage:    "Specify the node to request data from.",
 			Required: true,
-		},
-		&cli.StringFlag{
-			Name:        "host",
-			Usage:       "Specify the address the node will be accessible at",
-			Value:       "127.0.0.1",
-			DefaultText: "localhost",
-		},
-		&cli.IntFlag{
-			Name:        "port",
-			Usage:       "Specify a port for the node to serve on",
-			Value:       8322,
-			DefaultText: "8322",
-			Action: func(ctx *cli.Context, v int) error {
-				if v >= 65536 {
-					return fmt.Errorf("flag port value %v out of range [0-65535]", v)
-				}
-				return nil
-			},
 		},
 		&cli.StringFlag{
 			Name:  "path",
@@ -130,14 +106,13 @@ var dataListCommand = cli.Command{
 	},
 	Action: func(ctx *cli.Context) error {
 		// Send the request
-		raw, err := RequestDataList(ctx.String("host"), ctx.Int("port"), ctx.String("node"), ctx.String("path"))
+		raw, err := RequestDataList(ctx.String("orchestrator"), ctx.String("node"), ctx.String("path"))
 		if err != nil {
 			return err
 		}
 
 		// Process the response
-		var out string
-		out = string(raw)
+		out := string(raw)
 		fmt.Println(out)
 
 		return nil

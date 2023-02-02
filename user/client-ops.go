@@ -11,9 +11,9 @@ import (
 )
 
 // Function for sending a get request to an orchestrator
-func GetNodes(addr string, port int) ([]byte, error) {
+func GetNodes(addr string) ([]byte, error) {
 	// Prepare the request
-	url := fmt.Sprintf("http://%s:%d/nodes", addr, port)
+	url := fmt.Sprintf("http://%s/nodes", addr)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -38,13 +38,13 @@ func GetNodes(addr string, port int) ([]byte, error) {
 	return body, nil
 }
 
-func RunAction(addr string, port int, node string, action string, data map[string]string) error {
-	url := fmt.Sprintf("http://%s:%d/%s/action/%s", addr, port, node, action)
+func RunAction(addr string, node string, action string, data map[string]string) error {
+	url := fmt.Sprintf("http://%s/%s/action/%s", addr, node, action)
 	return DoPostRequest(url, data)
 }
 
-func StreamAction(addr string, port int, node string, streamPort int, action string, data map[string]string) error {
-	url := fmt.Sprintf("http://%s:%d/%s/action/%s", addr, port, node, action)
+func StreamAction(addr string, node string, streamPort int, action string, data map[string]string) error {
+	url := fmt.Sprintf("http://%s/%s/action/%s", addr, node, action)
 	data["stream_addr"] = "loopback"
 	data["stream_port"] = fmt.Sprintf("%d", streamPort)
 	postErr := DoPostRequest(url, data)
@@ -58,13 +58,13 @@ func StreamAction(addr string, port int, node string, streamPort int, action str
 
 }
 
-func RequestData(addr string, port int, node string, path string) ([]byte, error) {
-	url := fmt.Sprintf("http://%s:%d/%s/data/%s", addr, port, node, path)
+func RequestData(addr string, node string, path string) ([]byte, error) {
+	url := fmt.Sprintf("http://%s/%s/data/%s", addr, node, path)
 	return DoGetRequest(url)
 }
 
-func RequestDataList(addr string, port int, node string, path string) ([]byte, error) {
-	url := fmt.Sprintf("http://%s:%d/%s/list/%s", addr, port, node, path)
+func RequestDataList(addr string, node string, path string) ([]byte, error) {
+	url := fmt.Sprintf("http://%s/%s/list/%s", addr, node, path)
 	fmt.Println("Requesting data list from: " + url)
 	return DoGetRequest(url)
 }
