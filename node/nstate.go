@@ -10,33 +10,45 @@ import (
 	"time"
 
 	"github.com/bofrim/gorch/orchestrator"
+	"golang.org/x/exp/slog"
+)
+
+const NodePollPeriod time.Duration = orchestrator.DisconnectStaleNodePeriod / 2
+const QuickPollThreshold int = 25
+const NodeQuickPollPeriod time.Duration = NodePollPeriod / time.Duration(QuickPollThreshold)
+
+type NodeCommState string
+
+const (
+	Polling       NodeCommState = "polling"
+	QuickPolling  NodeCommState = "quick-polling"
+	Registered    NodeCommState = "registered"
+	Disconnecting NodeCommState = "disconnecting"
+	Disconnected  NodeCommState = "disconnected"
 )
 
 type NodeState struct {
 	commState NodeCommState
 	pollCount int
 }
-type NodeCommState int
 
-const NodePollPeriod time.Duration = orchestrator.DisconnectStaleNodePeriod / 2
-const QuickPollThreshold int = 25
-const NodeQuickPollPeriod time.Duration = time.Duration(int(NodePollPeriod) / QuickPollThreshold)
+func (ns *NodeState) ChangeState(state NodeCommState) {
+	slog.Default().Info(
+		"Change node comm state",
+		slog.String("old", string(ns.commState)),
+		slog.String("new", string(state)),
+	)
+	ns.commState = state
+}
 
-const (
-	Polling NodeCommState = iota
-	QuickPolling
-	Registered
-	Disconnecting
-	Disconnected
-)
-
-func NodeStateThread(n *Node, ctx context.Context, done func()) {
+func NodeStateThread(n *Node, ctx context.Context, logger *slog.Logger, done func()) {
 	defer done()
 	n.nodeState.commState = Polling
 	ticker := time.NewTicker(NodePollPeriod)
 
 	// Attempt to register at startup to avoid waiting for the first period to elapse
 	if err := register(n.OrchAddr, n.Name, n.ServerAddr, n.ServerPort); err == nil {
+		logger.Debug("Start-up registration.", slog.String("node", n.Name))
 		n.nodeState.commState = Registered
 	}
 
@@ -48,30 +60,27 @@ func NodeStateThread(n *Node, ctx context.Context, done func()) {
 				n.nodeState.pollCount++
 				if n.nodeState.pollCount > QuickPollThreshold {
 					n.nodeState.pollCount = 0
-					n.nodeState.commState = Polling
+					n.nodeState.ChangeState(Polling)
 					ticker.Reset(NodePollPeriod)
 				}
 				fallthrough
 			case Polling:
 				if err := register(n.OrchAddr, n.Name, n.ServerAddr, n.ServerPort); err == nil {
-					n.nodeState.commState = Registered
+					n.nodeState.ChangeState(Registered)
 				}
 			case Registered:
 				if err := ping(n.OrchAddr, n.Name); err != nil {
-					log.Println("Bad ping. Going back to polling")
-					n.nodeState.commState = QuickPolling
+					n.nodeState.ChangeState(QuickPolling)
 					ticker.Reset(NodeQuickPollPeriod)
 				}
 			case Disconnecting:
-				log.Println("Disconnecting.")
 				_ = disconnect(n.OrchAddr, n.Name)
-				n.nodeState.commState = Disconnected
+				n.nodeState.ChangeState(Disconnected)
 				return
 			case Disconnected:
-				log.Println("Disconnected.")
 				return
 			default:
-				n.nodeState.commState = Disconnecting
+				n.nodeState.ChangeState(Disconnecting)
 			}
 
 		case <-ctx.Done():

@@ -4,26 +4,38 @@ import (
 	"context"
 	"log"
 	"sync"
+
+	"github.com/bofrim/gorch/utils"
+	"golang.org/x/exp/slog"
 )
 
 type Node struct {
-	Name        string
-	ServerAddr  string
-	ServerPort  int
-	DataDir     string
-	Data        map[string]map[string]interface{}
-	ActionsPath string
-	Actions     map[string]Action
-	OrchAddr    string
-	nodeState   NodeState
+	Name             string
+	ServerAddr       string
+	ServerPort       int
+	DataDir          string
+	Data             map[string]map[string]interface{}
+	ActionsPath      string
+	Actions          map[string]*Action
+	OrchAddr         string
+	nodeState        NodeState
+	ArbitraryActions bool
+	LogFile          string
 }
 
-func (node *Node) Run() error {
+func (node *Node) Run() (err error) {
 	// Initialize Node
+	var logger *slog.Logger
+	var closeFn func()
+	if logger, closeFn, err = utils.SetupLogging(node.LogFile); err != nil {
+		return err
+	}
+	defer closeFn()
+
 	// Load data
 	data, err := loadData(node.DataDir)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("Failed to load data.", err)
 		return err
 	}
 	node.Data = data
@@ -42,11 +54,11 @@ func (node *Node) Run() error {
 	}
 
 	wg.Add(1)
-	go MonitorThread(node, ctx, done)
+	go MonitorThread(node, ctx, logger, done)
 	wg.Add(1)
-	go NServerThread(node, ctx, done)
+	go NServerThread(node, ctx, logger, done)
 	wg.Add(1)
-	go NodeStateThread(node, ctx, done)
+	go NodeStateThread(node, ctx, logger, done)
 
 	wg.Wait()
 	cancel()

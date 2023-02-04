@@ -38,12 +38,12 @@ func GetNodes(addr string) ([]byte, error) {
 	return body, nil
 }
 
-func RunAction(addr string, node string, action string, data map[string]string) error {
+func RunAction(addr string, node string, action string, data map[string]interface{}) error {
 	url := fmt.Sprintf("http://%s/%s/action/%s", addr, node, action)
 	return DoPostRequest(url, data)
 }
 
-func StreamAction(addr string, node string, streamPort int, action string, data map[string]string) error {
+func StreamAction(addr string, node string, streamPort int, action string, data map[string]interface{}) error {
 	url := fmt.Sprintf("http://%s/%s/action/%s", addr, node, action)
 	data["stream_addr"] = "loopback"
 	data["stream_port"] = fmt.Sprintf("%d", streamPort)
@@ -98,7 +98,7 @@ func DoGetRequest(url string) ([]byte, error) {
 	return body, nil
 }
 
-func DoPostRequest(url string, data map[string]string) error {
+func DoPostRequest(url string, data map[string]interface{}) error {
 	serial, err := json.Marshal(data)
 	if err != nil {
 		return err

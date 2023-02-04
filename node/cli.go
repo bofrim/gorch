@@ -74,6 +74,17 @@ func GetCliCommand() *cli.Command {
 					return nil
 				},
 			},
+			&cli.BoolFlag{
+				Name:        "arbitrary-actions",
+				Usage:       "Allow the node to run arbitrary actions",
+				Value:       false,
+				DefaultText: "false",
+			},
+			&cli.StringFlag{
+				Name:     "log",
+				Usage:    "Specify a path to a file to log to. If not specified, logs will be printed to stdout",
+				Required: false,
+			},
 		},
 		Action: func(cCtx *cli.Context) error {
 			absDataPath, _ := filepath.Abs(cCtx.String("data"))
@@ -82,12 +93,13 @@ func GetCliCommand() *cli.Command {
 				absActionPath, _ = filepath.Abs(cCtx.String("actions"))
 			}
 			node := Node{
-				Name:        cCtx.String("name"),
-				ServerPort:  cCtx.Int("port"),
-				ServerAddr:  cCtx.String("host"),
-				DataDir:     absDataPath,
-				ActionsPath: absActionPath,
-				OrchAddr:    cCtx.String("orchestrator"),
+				Name:             cCtx.String("name"),
+				ServerPort:       cCtx.Int("port"),
+				ServerAddr:       cCtx.String("host"),
+				DataDir:          absDataPath,
+				ActionsPath:      absActionPath,
+				OrchAddr:         cCtx.String("orchestrator"),
+				ArbitraryActions: cCtx.Bool("arbitrary-actions"),
 			}
 			return node.Run()
 		},

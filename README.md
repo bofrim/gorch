@@ -1,15 +1,15 @@
 # Gorch
 
+**Note**: This module is still very early in development. It should be considered pre-pre-alpha.
 
-__Note__: This module is still very early in development. It should be considered pre-pre-alpha.
-
-__Warning__: By definition portions of this module will be used for remote code execution. Ensure you understand the security implications of this before using this module.
+**Warning**: By definition portions of this module will be used for remote code execution. Ensure you understand the security implications of this before using this module.
 
 <p align="center">
   <img src="https://cdn.discordapp.com/attachments/1055542894221602816/1067475495580610590/image.png" alt="gorch mascot" width="200"/>
 </p>
 
 ## About
+
 Gorch (pronounced gork) is a tool that can be used to interface with and manage multiple remote nodes.
 Drop json files into your node's data directory and gorch will serve them for you.
 
@@ -36,51 +36,14 @@ go build -o gorch gorch.go
 ### Running a node
 
 ```bash
-./gorch node \        
+./gorch node \
   --data /some/path/to/data_dir \
   --actions /some/path/to/actions.yaml \
   --name cool_node_1 \
   --orchestrator "127.0.0.1:8322"
 ```
 
-### Running user operations
-
-```bash
-# Get info about the orchestrator
-./gorch user info \
-  --orchestrator "127.0.0.1:8322"
-
-# Get all the data from a node
-./gorch user data \
-  --orchestrator "127.0.0.1:8322" \
-  --node cool_node_1 \
-  --json # optional
-
-# Get a specific json file from a node
-./gorch user data \
-  --orchestrator "127.0.0.1:8322" \
-  --node cool_node_1 \
-  --path asdf \
-  --json # optional
-
-# Run an action on a node
-./gorch user action \
-  --orchestrator "127.0.0.1:8322" \
-  --node cool_node_1 \
-  --action hello \
-  --data message=hello \
-  --data other=world
-
-# Run an action on a node and stream output
-./gorch user action \
-  --orchestrator "127.0.0.1:8322" \
-  --node cool_node_1 \
-  --action sleep \
-  --data time=5 \
-  --stream-port 8323
-```
-
-## Setting up an actions file
+#### Setting up an actions file for a node
 
 ```yaml
 # actions.yaml
@@ -107,10 +70,111 @@ go build -o gorch gorch.go
     - "date"
 ```
 
+### Running user operations
+
+Get info about the orchestrator
+
+```bash
+./gorch user info \
+  --orchestrator "127.0.0.1:8322"
+```
+
+Get all the data from a node
+
+```bash
+./gorch user data \
+  --orchestrator "127.0.0.1:8322" \
+  --node cool_node_1 \
+  --json # optional
+
+```
+
+Get a specific json file from a node
+
+```bash
+./gorch user data \
+  --orchestrator "127.0.0.1:8322" \
+  --node cool_node_1 \
+  --path asdf \
+  --json # optional
+
+```
+
+Run an action on a node
+
+```bash
+./gorch user action \
+  --orchestrator "127.0.0.1:8322" \
+  --node cool_node_1 \
+  --action hello \
+  --data message=hello \
+  --data other=world
+```
+
+Run an action on a node and stream output.
+
+```bash
+./gorch user action \
+  --orchestrator "127.0.0.1:8322" \
+  --node cool_node_1 \
+  --action sleep \
+  --data time=5 \
+  --stream-port 8323
+```
+
+Specify a data file to use as the body of the request
+
+```bash
+./gorch user action \
+  --orchestrator "127.0.0.1:8322" \
+  --node cool_node_1 \
+  --action sleep \
+  --data-file params.json \
+  --stream-port 8323
+```
+
+Run arbitrary commands on a node
+(Note: The node must be running with the `--arbitrary-actions` flag set)
+
+```bash
+go run gorch.go user action \
+  --node brad \
+  --data dir="/var" \
+  --data-file adhoc.json \
+  --stream-port 8323
+```
+
+Where `adhoc.json` is:
+
+```json
+{
+  "action": {
+    "name": "adhoc-list",
+    "description": "List the contents of a directory",
+    "params": ["dir"],
+    "commands": ["ls {{.dir}"]
+  },
+  "dir": "/path/to/list"
+}
+```
+
 ## TODO
 
-* [ ] Add a way to specify a configuration file for a node
-* [ ] Add a way to run periodic actions on a node (should be an optional configuration option for a node) Figure out what to do with the output of the action.
-* [ ] Setup web hooks for data changes or events related to actions
-* [ ] Setup centralized logging for nodes so logs will be accessible through the orchestrator even if the node is offline
-* [ ] Add a user command to stream logs from either the orchestrator or a specific node
+- [ ] Add a way to specify a configuration file for a node
+- [ ] Add a way to run periodic actions on a node (should be an optional configuration option for a node) Figure out what to do with the output of the action.
+- [ ] Setup web hooks for data changes or events related to actions
+- [ ] Setup centralized logging for nodes so logs will be accessible through the orchestrator even if the node is offline
+- [ ] Add a user command to stream logs from either the orchestrator or a specific node
+- [ ] Fix the hook listener so that it'll timeout if it doesn't receive a response from the node within a certain amount of time
+- [ ] Gracefully handle errors in the actions
+
+- [ ] node should be less strict on what it needs to run (shouldn't need data dir, actions file, or orchestrator)
+- [ ] Ability for adhoc actions
+- [ ] webhook for action completion
+- [ ] nodes should be able to specify the allowed number of concurrent actions
+- [ ] TLS
+- [ ] some basic form of auth even if it's just a shared secret
+- [ ] a flag to chose if its able to run on a real network
+- [ ] Ability to list currently running actions (with info about them; params, age, etc)
+- [ ] Ability to kill a running action
+- [ ] a front end for the orchestrator and nodes

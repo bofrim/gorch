@@ -1,11 +1,14 @@
 package user
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
 	"github.com/urfave/cli/v2"
+	"golang.org/x/exp/maps"
 )
 
 const dataRegexPattern = `^[a-zA-Z][a-zA-Z0-9]*=[a-zA-Z0-9"'!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$`
@@ -29,11 +32,12 @@ var actionCommand = cli.Command{
 		&cli.StringFlag{
 			Name:     "action",
 			Usage:    "Specify the action to perform on the node.",
-			Required: true,
+			Required: false,
 		},
 		&cli.StringSliceFlag{
-			Name:  "data",
-			Usage: "Pass data in key=value format",
+			Name:     "data",
+			Usage:    "Pass data in key=value format",
+			Required: false,
 			Action: func(ctx *cli.Context, v []string) error {
 				// check if the data is in key=value format
 				dataRegex := regexp.MustCompile(dataRegexPattern)
@@ -50,6 +54,11 @@ var actionCommand = cli.Command{
 				return nil
 			},
 		},
+		&cli.StringFlag{
+			Name:     "data-file",
+			Usage:    "specify a data file",
+			Required: false,
+		},
 		&cli.IntFlag{
 			Name:  "stream-port",
 			Usage: "A port to use to stream the response from the action.",
@@ -64,21 +73,33 @@ var actionCommand = cli.Command{
 	},
 	Action: func(ctx *cli.Context) error {
 		addr := ctx.String("orchestrator")
-		action := ctx.String("action")
 		node := ctx.String("node")
 		streamPort := ctx.Int("stream-port")
+		action := ctx.String("action")
 
 		// Parse data
-		data := make(map[string]string)
-		dataRegex := regexp.MustCompile(dataRegexPattern)
+		flagData := make(map[string]interface{})
 		for _, d := range ctx.StringSlice("data") {
-			if !dataRegex.MatchString(d) {
-				err := fmt.Errorf("data %v is not in key=value format", d)
-				fmt.Println(err.Error())
-				return err
-			}
-			data[strings.Split(d, "=")[0]] = strings.Split(d, "=")[1]
+			flagData[strings.Split(d, "=")[0]] = strings.Split(d, "=")[1]
 		}
+
+		fileData := make(map[string]interface{})
+		if dataFile := ctx.String("data-file"); dataFile != "" {
+			file, oErr := os.Open(dataFile)
+			if oErr != nil {
+				return oErr
+			}
+			defer file.Close()
+
+			decoder := json.NewDecoder(file)
+			if decErr := decoder.Decode(&fileData); decErr != nil {
+				return decErr
+			}
+		}
+
+		data := make(map[string]interface{})
+		maps.Copy(data, flagData)
+		maps.Copy(data, fileData)
 
 		var runErr error
 		if streamPort != 0 {
