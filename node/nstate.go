@@ -25,6 +25,7 @@ const (
 	Registered    NodeCommState = "registered"
 	Disconnecting NodeCommState = "disconnecting"
 	Disconnected  NodeCommState = "disconnected"
+	Idle          NodeCommState = "idle"
 )
 
 type NodeState struct {
@@ -43,15 +44,18 @@ func (ns *NodeState) ChangeState(state NodeCommState) {
 
 func NodeStateThread(n *Node, ctx context.Context, logger *slog.Logger, done func()) {
 	defer done()
-	n.nodeState.commState = Polling
-	ticker := time.NewTicker(NodePollPeriod)
 
-	// Attempt to register at startup to avoid waiting for the first period to elapse
-	if err := register(n.OrchAddr, n.Name, n.ServerAddr, n.ServerPort); err == nil {
-		logger.Debug("Start-up registration.", slog.String("node", n.Name))
-		n.nodeState.commState = Registered
+	if n.OrchAddr != "" {
+		n.nodeState.commState = Polling
+		if err := register(n.OrchAddr, n.Name, n.ServerAddr, n.ServerPort); err == nil {
+			logger.Debug("Start-up registration.", slog.String("node", n.Name))
+			n.nodeState.commState = Registered
+		}
+	} else {
+		n.nodeState.commState = Idle
 	}
 
+	ticker := time.NewTicker(NodePollPeriod)
 	for {
 		select {
 		case <-ticker.C:
@@ -72,6 +76,10 @@ func NodeStateThread(n *Node, ctx context.Context, logger *slog.Logger, done fun
 				if err := ping(n.OrchAddr, n.Name); err != nil {
 					n.nodeState.ChangeState(QuickPolling)
 					ticker.Reset(NodeQuickPollPeriod)
+				}
+			case Idle:
+				if n.OrchAddr != "" {
+					n.nodeState.ChangeState(QuickPolling)
 				}
 			case Disconnecting:
 				_ = disconnect(n.OrchAddr, n.Name)

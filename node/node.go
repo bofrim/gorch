@@ -2,11 +2,13 @@ package node
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strings"
 	"sync"
 
-	"github.com/bofrim/gorch/utils"
 	"golang.org/x/exp/slog"
+	"golang.org/x/sync/semaphore"
 )
 
 type Node struct {
@@ -21,24 +23,26 @@ type Node struct {
 	nodeState        NodeState
 	ArbitraryActions bool
 	LogFile          string
+	MaxNumActions    int
+	actionSem        *semaphore.Weighted
 }
 
-func (node *Node) Run() (err error) {
+func (node *Node) Run(logger *slog.Logger) (err error) {
 	// Initialize Node
-	var logger *slog.Logger
-	var closeFn func()
-	if logger, closeFn, err = utils.SetupLogging(node.LogFile); err != nil {
-		return err
-	}
-	defer closeFn()
+	node.actionSem = semaphore.NewWeighted(int64(node.MaxNumActions))
+	logger.Debug("Created node semaphore.", slog.Int("count", node.MaxNumActions))
 
 	// Load data
-	data, err := loadData(node.DataDir)
-	if err != nil {
-		logger.Error("Failed to load data.", err)
-		return err
+	if node.DataDir != "" {
+		data, err := loadData(node.DataDir)
+		if err != nil {
+			logger.Error("Failed to load data.", err)
+			return err
+		}
+		node.Data = data
+	} else {
+		node.Data = make(map[string]map[string]interface{})
 	}
-	node.Data = data
 
 	// Load actions
 	if node.ActionsPath != "" {
@@ -79,4 +83,33 @@ func (node *Node) ReloadActions(path string) error {
 	node.Actions = actions
 	node.ActionsPath = path
 	return nil
+}
+
+func (node *Node) RunAction(action *Action, streamDest string, params map[string]string, logger *slog.Logger) (out string, semOk bool, err error) {
+	// First try to acquire the semaphore
+	semOk = node.actionSem.TryAcquire(1)
+	if !semOk {
+		return out, semOk, err
+	} else {
+		// Next run the action
+		// Ensure the semaphore is always released!
+		if streamDest == "" {
+			// Release asap
+			defer node.actionSem.Release(1)
+			outputs, err := action.Run(params)
+			if err != nil {
+				return out, semOk, err
+			}
+			out = strings.Join(outputs, "\n")
+		} else {
+			go func() {
+				// Release when the action finishes
+				defer node.actionSem.Release(1)
+				action.RunStreamed(streamDest, params, logger)
+			}()
+			out = fmt.Sprintf("Streaming action output to %s", streamDest)
+		}
+	}
+
+	return out, semOk, err
 }

@@ -66,7 +66,7 @@ func (a Action) Run(params any) ([]string, error) {
 	return results, nil
 }
 
-func (a Action) RunStreamed(addr string, port int, params any, logger *slog.Logger) error {
+func (a Action) RunStreamed(streamDest string, params any, logger *slog.Logger) error {
 	commands, err := a.BuildCommands(params)
 	if err != nil {
 		logger.Error(
@@ -77,7 +77,7 @@ func (a Action) RunStreamed(addr string, port int, params any, logger *slog.Logg
 		return err
 	}
 
-	hc := hook.NewHookClient(addr, port)
+	hc := hook.NewHookClient(streamDest)
 	go hc.Start()
 	defer hc.Stop()
 

@@ -14,7 +14,6 @@ const HookClientReqTimeout = 3 * time.Second
 
 type HookClient struct {
 	Address    string
-	Port       int
 	UpdateChan chan []byte
 	outputLog  [][]byte
 	ctx        context.Context
@@ -23,10 +22,9 @@ type HookClient struct {
 	client     *http.Client
 }
 
-func NewHookClient(address string, port int) *HookClient {
+func NewHookClient(addr string) *HookClient {
 	return &HookClient{
-		Address:    address,
-		Port:       port,
+		Address:    addr,
 		UpdateChan: make(chan []byte, HookClientBufferSize),
 		outputLog:  make([][]byte, 0),
 		isRunning:  false,
@@ -84,17 +82,17 @@ func (h *HookClient) Stop() {
 }
 
 func (h *HookClient) update(body []byte) error {
-	url := fmt.Sprintf("http://%s:%d/update", h.Address, h.Port)
+	url := fmt.Sprintf("http://%s/update", h.Address)
 	return h.post(url, body)
 }
 
 func (h *HookClient) keepalive() error {
-	url := fmt.Sprintf("http://%s:%d/keepalive", h.Address, h.Port)
+	url := fmt.Sprintf("http://%s/keepalive", h.Address)
 	return h.post(url, []byte{})
 }
 
 func (h *HookClient) finish() error {
-	url := fmt.Sprintf("http://%s:%d/finish", h.Address, h.Port)
+	url := fmt.Sprintf("http://%s/finish", h.Address)
 	return h.post(url, []byte{})
 }
 

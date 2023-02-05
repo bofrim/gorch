@@ -4,11 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/exp/slog"
@@ -79,72 +77,55 @@ func NServerThread(node *Node, ctx context.Context, logger *slog.Logger, done fu
 		return c.SendString(string(s))
 	})
 
-	// Experimental allow the user to send an arbitrary action to the node
-	// The body is the same as a normal action, but an "action" tag is required
-	// with the info for the action that would have been included in the actions definition file
-	// TODO: Test, simplify, and establish a better structure
 	actionEp.Post("/", func(c *fiber.Ctx) error {
 		logger.Debug("Run Adhoc action")
+
+		// Ensure arbitrary actions are allowed
 		if !node.ArbitraryActions {
+			logger.Debug("Adhoc action not enabled.")
 			return c.Status(http.StatusForbidden).SendString("Remote actions are disabled.")
 		}
-		// Parse out an action from the body
-		var body map[string]interface{}
-		if c.Body() != nil {
-			err := json.Unmarshal(c.Body(), &body)
-			if err != nil {
-				log.Printf("Error parsing body: %s\n", err.Error())
-				return c.Status(http.StatusBadRequest).Send([]byte(err.Error()))
-			}
-		} else {
-			body = map[string]interface{}{}
+
+		// Parse the info from the request
+		body, sDest, err := parseActionBody(c)
+		if err != nil {
+			logger.Error("Failed to parse body", err)
+			return c.Status(http.StatusBadRequest).Send([]byte(err.Error()))
 		}
 
 		// Expect an action definition to be specified in the body
 		var adhocAction AdHocAction
-		actionDefErr := json.Unmarshal(c.Body(), &adhocAction)
-		if actionDefErr != nil {
-			log.Printf("Error parsing body: %s\n", actionDefErr.Error())
-			return c.Status(http.StatusBadRequest).Send([]byte(actionDefErr.Error()))
+		if err := json.Unmarshal(c.Body(), &adhocAction); err != nil {
+			logger.Error("Failed to parse adhoc action definition", err)
+			return c.Status(http.StatusBadRequest).Send([]byte(err.Error()))
 		}
+		action := adhocAction.ActionDef
 
 		// Run the action
-		action := adhocAction.ActionDef
-		var out string
-		if body["stream_addr"] != "" && body["stream_port"] != "" {
-			sAddr := body["stream_addr"].(string)
-			if sAddr == "loopback" {
-				sAddr = c.IP()
-			}
-			sPort, convErr := strconv.Atoi(body["stream_port"].(string))
-			if convErr != nil {
-				return c.Status(http.StatusBadRequest).Send([]byte("Invalid stream port"))
-			}
-			go action.RunStreamed(sAddr, sPort, body, logger)
-			out = fmt.Sprintf("[%s] Streaming to %s:%d", node.Name, sAddr, sPort)
-		} else {
-			outputs, err := action.Run(body)
-			if err != nil {
-				return err
-			}
-			out = strings.Join(outputs, "\n")
+		out, ok, err := node.RunAction(&action, sDest, body, logger)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+		}
+		if !ok {
+			return c.Status(fiber.StatusServiceUnavailable).SendString(
+				fmt.Sprintf("%d actions already running", node.MaxNumActions),
+			)
 		}
 		return c.SendString(out)
 	})
 
 	actionEp.Post("/:name", func(c *fiber.Ctx) error {
 		logger.Debug("Run action", slog.String("action", c.Params("name")))
-		name := c.Params("name")
-		var body map[string]string
-		if c.Body() != nil {
-			err := json.Unmarshal(c.Body(), &body)
-			if err != nil {
-				log.Printf("Error parsing body: %s\n", err.Error())
-				return c.Status(http.StatusBadRequest).Send([]byte(err.Error()))
-			}
-		} else {
-			body = map[string]string{}
+
+		// Parse info from request
+		body, sDest, err := parseActionBody(c)
+		if err != nil {
+			logger.Error("Failed to parse body", err)
+			return c.Status(http.StatusBadRequest).Send([]byte(err.Error()))
 		}
+
+		// Find the action
+		name := c.Params("name")
 		action, ok := node.Actions[name]
 		if !ok {
 			err := fmt.Errorf("unable to find action '%s'", name)
@@ -152,29 +133,19 @@ func NServerThread(node *Node, ctx context.Context, logger *slog.Logger, done fu
 			return err
 		}
 
-		var out string
-		if body["stream_addr"] != "" && body["stream_port"] != "" {
-			logger.Debug("Action is streamed", slog.String("action", c.Params("name")))
-			sAddr := body["stream_addr"]
-			if sAddr == "loopback" {
-				sAddr = c.IP()
-			}
-			sPort, convErr := strconv.Atoi(body["stream_port"])
-			if convErr != nil {
-				return c.Status(http.StatusBadRequest).Send([]byte("Invalid stream port"))
-			}
-			go action.RunStreamed(sAddr, sPort, body, logger)
-			out = fmt.Sprintf("[%s] Streaming to %s:%d", node.Name, sAddr, sPort)
-		} else {
-			outputs, err := action.Run(body)
-			if err != nil {
-				return err
-			}
-			out = strings.Join(outputs, "\n")
+		// Run the action
+		out, ok, err := node.RunAction(action, sDest, body, logger)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 		}
-
+		if !ok {
+			return c.Status(fiber.StatusServiceUnavailable).SendString(
+				fmt.Sprintf("%d actions already running", node.MaxNumActions),
+			)
+		}
 		return c.SendString(out)
 	})
+
 	app.Post(("/reload/"), func(c *fiber.Ctx) error {
 		logger.Debug("Reload actions.")
 		if _, err := os.Stat(node.ActionsPath); os.IsNotExist(err) {
@@ -190,4 +161,29 @@ func NServerThread(node *Node, ctx context.Context, logger *slog.Logger, done fu
 	}
 	logger.Debug("Starting server.")
 	app.Listen(fmt.Sprintf(":%d", node.ServerPort))
+}
+
+func parseActionBody(c *fiber.Ctx) (body map[string]string, sDest string, err error) {
+	if c.Body() != nil {
+		err := json.Unmarshal(c.Body(), &body)
+		if err != nil {
+			return nil, sDest, err
+		}
+	} else {
+		body = map[string]string{}
+	}
+	if body["stream_addr"] != "" && body["stream_port"] != "" {
+		sAddr := body["stream_addr"]
+		if sAddr == "loopback" {
+			sAddr = c.IP()
+		}
+		sPortStr := body["stream_port"]
+		sPort, convertErr := strconv.Atoi(sPortStr)
+		if convertErr != nil {
+			return nil, "", fmt.Errorf("invalid stream port: %s\nbody: %+v", sPortStr, body)
+		}
+		sDest = fmt.Sprintf("%s:%d", sAddr, sPort)
+	}
+
+	return body, sDest, err
 }

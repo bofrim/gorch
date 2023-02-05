@@ -137,10 +137,10 @@ Run arbitrary commands on a node
 (Note: The node must be running with the `--arbitrary-actions` flag set)
 
 ```bash
-go run gorch.go user action \
+.gorch user action \
   --node brad \
-  --data dir="/var" \
   --data-file adhoc.json \
+  --data message="hello" \  # data can be specified in the data-file, or as a flag
   --stream-port 8323
 ```
 
@@ -151,8 +151,8 @@ Where `adhoc.json` is:
   "action": {
     "name": "adhoc-list",
     "description": "List the contents of a directory",
-    "params": ["dir"],
-    "commands": ["ls {{.dir}"]
+    "params": ["dir", "message"],
+    "commands": ["ls {{.dir}}", "echo {{.message}}"]
   },
   "dir": "/path/to/list"
 }
@@ -168,8 +168,6 @@ Where `adhoc.json` is:
 - [ ] Fix the hook listener so that it'll timeout if it doesn't receive a response from the node within a certain amount of time
 - [ ] Gracefully handle errors in the actions
 
-- [ ] node should be less strict on what it needs to run (shouldn't need data dir, actions file, or orchestrator)
-- [ ] Ability for adhoc actions
 - [ ] webhook for action completion
 - [ ] nodes should be able to specify the allowed number of concurrent actions
 - [ ] TLS
