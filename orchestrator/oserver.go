@@ -2,6 +2,7 @@ package orchestrator
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"time"
@@ -109,6 +110,28 @@ func OServerThread(orchestrator *Orchestrator, ctx context.Context, logger *slog
 		return c.Redirect(nodeUrl, fiber.StatusTemporaryRedirect)
 	})
 
-	err := app.Listen(fmt.Sprintf(":%d", orchestrator.Port))
-	log.Println(err)
+	if orchestrator.CertPath != "" {
+		// Create tls certificate
+		cer, err := tls.LoadX509KeyPair(
+			fmt.Sprintf("%s/ssl.crt", orchestrator.CertPath),
+			fmt.Sprintf("%s/ssl.key", orchestrator.CertPath),
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		config := &tls.Config{
+			Certificates:       []tls.Certificate{cer},
+			InsecureSkipVerify: true,
+		}
+		ln, err := tls.Listen("tcp", fmt.Sprintf(":%d", orchestrator.Port), config)
+		if err != nil {
+			panic(err)
+		}
+
+		log.Fatal(app.Listener(ln))
+	} else {
+		err := app.Listen(fmt.Sprintf(":%d", orchestrator.Port))
+		log.Println(err)
+	}
 }

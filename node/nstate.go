@@ -3,6 +3,7 @@ package node
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -99,7 +100,7 @@ func NodeStateThread(n *Node, ctx context.Context, logger *slog.Logger, done fun
 
 func register(orchAddr, nodeName string, nodeAddr string, nodePort int) error {
 	// Register with the orchestrator
-	url := fmt.Sprintf("http://%s/register/", orchAddr)
+	url := fmt.Sprintf("https://%s/register/", orchAddr)
 	data := orchestrator.NodeRegistration{
 		NodeName: nodeName,
 		NodeAddr: nodeAddr,
@@ -117,7 +118,13 @@ func register(orchAddr, nodeName string, nodeAddr string, nodePort int) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Close = true
 
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -132,13 +139,19 @@ func register(orchAddr, nodeName string, nodeAddr string, nodePort int) error {
 }
 
 func ping(addr, name string) error {
-	url := fmt.Sprintf("http://%s/ping/%s", addr, name)
+	url := fmt.Sprintf("https://%s/ping/%s", addr, name)
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
 		return err
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err

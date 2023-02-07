@@ -14,10 +14,9 @@ var dataRequestCommand = cli.Command{
 	Usage: "Request data from a node.",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
-			Name:        "orchestrator",
-			Usage:       "Specify the address of the gorch orchestrator",
-			Value:       "127.0.0.1:8322",
-			DefaultText: "localhost:8322",
+			Name:  "orchestrator",
+			Usage: "Specify the address of the gorch orchestrator",
+			Value: "127.0.0.1:443",
 		},
 		&cli.StringFlag{
 			Name:     "node",
@@ -83,10 +82,9 @@ var dataListCommand = cli.Command{
 	Usage: "List the data available from a node.",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
-			Name:        "orchestrator",
-			Usage:       "Specify the address of the gorch orchestrator",
-			Value:       "127.0.0.1:8322",
-			DefaultText: "localhost:8322",
+			Name:  "orchestrator",
+			Usage: "Specify the address of the gorch orchestrator",
+			Value: "127.0.0.1:443",
 		},
 		&cli.StringFlag{
 			Name:     "node",

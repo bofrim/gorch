@@ -2,6 +2,7 @@ package user
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,14 +14,20 @@ import (
 // Function for sending a get request to an orchestrator
 func GetNodes(addr string) ([]byte, error) {
 	// Prepare the request
-	url := fmt.Sprintf("http://%s/nodes", addr)
+	url := fmt.Sprintf("https://%s/nodes", addr)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	// Do the request
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -39,12 +46,12 @@ func GetNodes(addr string) ([]byte, error) {
 }
 
 func RunAction(addr string, node string, action string, data map[string]interface{}) error {
-	url := fmt.Sprintf("http://%s/%s/action/%s", addr, node, action)
+	url := fmt.Sprintf("https://%s/%s/action/%s", addr, node, action)
 	return DoPostRequest(url, data)
 }
 
 func StreamAction(addr string, node string, streamPort int, action string, data map[string]interface{}) error {
-	url := fmt.Sprintf("http://%s/%s/action/%s", addr, node, action)
+	url := fmt.Sprintf("https://%s/%s/action/%s", addr, node, action)
 	data["stream_addr"] = "loopback"
 	data["stream_port"] = fmt.Sprintf("%d", streamPort)
 	postErr := DoPostRequest(url, data)
@@ -59,12 +66,12 @@ func StreamAction(addr string, node string, streamPort int, action string, data 
 }
 
 func RequestData(addr string, node string, path string) ([]byte, error) {
-	url := fmt.Sprintf("http://%s/%s/data/%s", addr, node, path)
+	url := fmt.Sprintf("https://%s/%s/data/%s", addr, node, path)
 	return DoGetRequest(url)
 }
 
 func RequestDataList(addr string, node string, path string) ([]byte, error) {
-	url := fmt.Sprintf("http://%s/%s/list/%s", addr, node, path)
+	url := fmt.Sprintf("https://%s/%s/list/%s", addr, node, path)
 	fmt.Println("Requesting data list from: " + url)
 	return DoGetRequest(url)
 }
@@ -78,7 +85,13 @@ func DoGetRequest(url string) ([]byte, error) {
 	}
 
 	// Do the request
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
@@ -112,7 +125,13 @@ func DoPostRequest(url string, data map[string]interface{}) error {
 	req.Close = true
 
 	// Do the request
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)

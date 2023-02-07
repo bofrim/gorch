@@ -40,7 +40,7 @@ go build -o gorch gorch.go
   --data /some/path/to/data_dir \
   --actions /some/path/to/actions.yaml \
   --name cool_node_1 \
-  --orchestrator "127.0.0.1:8322"
+  --orchestrator "127.0.0.1:443"
 ```
 
 #### Setting up an actions file for a node
@@ -76,14 +76,14 @@ Get info about the orchestrator
 
 ```bash
 ./gorch user info \
-  --orchestrator "127.0.0.1:8322"
+  --orchestrator "127.0.0.1:443"
 ```
 
 Get all the data from a node
 
 ```bash
 ./gorch user data \
-  --orchestrator "127.0.0.1:8322" \
+  --orchestrator "127.0.0.1:443" \
   --node cool_node_1 \
   --json # optional
 
@@ -93,7 +93,7 @@ Get a specific json file from a node
 
 ```bash
 ./gorch user data \
-  --orchestrator "127.0.0.1:8322" \
+  --orchestrator "127.0.0.1:443" \
   --node cool_node_1 \
   --path asdf \
   --json # optional
@@ -104,7 +104,7 @@ Run an action on a node
 
 ```bash
 ./gorch user action \
-  --orchestrator "127.0.0.1:8322" \
+  --orchestrator "127.0.0.1:443" \
   --node cool_node_1 \
   --action hello \
   --data message=hello \
@@ -115,7 +115,7 @@ Run an action on a node and stream output.
 
 ```bash
 ./gorch user action \
-  --orchestrator "127.0.0.1:8322" \
+  --orchestrator "127.0.0.1:443" \
   --node cool_node_1 \
   --action sleep \
   --data time=5 \
@@ -126,7 +126,7 @@ Specify a data file to use as the body of the request
 
 ```bash
 ./gorch user action \
-  --orchestrator "127.0.0.1:8322" \
+  --orchestrator "127.0.0.1:443" \
   --node cool_node_1 \
   --action sleep \
   --data-file params.json \
@@ -169,7 +169,6 @@ Where `adhoc.json` is:
 - [ ] Gracefully handle errors in the actions
 
 - [ ] webhook for action completion
-- [ ] nodes should be able to specify the allowed number of concurrent actions
 - [ ] TLS
 - [ ] some basic form of auth even if it's just a shared secret
 - [ ] a flag to chose if its able to run on a real network

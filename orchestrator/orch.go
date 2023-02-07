@@ -9,9 +9,10 @@ import (
 )
 
 type Orchestrator struct {
-	Port    int
-	Nodes   map[string]*NodeConnection
-	LogFile string
+	Port     int
+	Nodes    map[string]*NodeConnection
+	LogFile  string
+	CertPath string
 }
 
 func (orchestrator *Orchestrator) Run() (err error) {
