@@ -2,8 +2,10 @@ package node
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -159,6 +161,32 @@ func NServerThread(node *Node, ctx context.Context, logger *slog.Logger, done fu
 	if node.ServerPort == 0 {
 		node.ServerPort = 3000
 	}
+
+	if node.CertPath != "" {
+		// Create tls certificate
+		cer, err := tls.LoadX509KeyPair(
+			fmt.Sprintf("%s/ssl.crt", node.CertPath),
+			fmt.Sprintf("%s/ssl.key", node.CertPath),
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		config := &tls.Config{
+			Certificates:       []tls.Certificate{cer},
+			InsecureSkipVerify: true,
+		}
+		ln, err := tls.Listen("tcp", fmt.Sprintf(":%d", node.ServerPort), config)
+		if err != nil {
+			panic(err)
+		}
+
+		log.Fatal(app.Listener(ln))
+	} else {
+		err := app.Listen(fmt.Sprintf(":%d", node.ServerPort))
+		log.Println(err)
+	}
+
 	logger.Debug("Starting server.")
 	app.Listen(fmt.Sprintf(":%d", node.ServerPort))
 }

@@ -17,10 +17,9 @@ func GetCliCommand() *cli.Command {
 		Usage: "Run a gorch node",
 		Flags: []cli.Flag{
 			&cli.IntFlag{
-				Name:        "port",
-				Usage:       "Specify a port for the node to serve on",
-				Value:       8321,
-				DefaultText: "8321",
+				Name:  "port",
+				Usage: "Specify a port for the node to serve on",
+				Value: 443,
 				Action: func(ctx *cli.Context, v int) error {
 					if v >= 65536 {
 						return fmt.Errorf("flag port value %v out of range [0-65535]", v)
@@ -90,6 +89,11 @@ func GetCliCommand() *cli.Command {
 				Usage: "Specify the number of concurrent actions that can run.",
 				Value: 100,
 			},
+			&cli.StringFlag{
+				Name:     "cert-path",
+				Usage:    "Specify a path with ssl.crt and ssl.key files",
+				Required: true,
+			},
 		},
 		Action: func(cCtx *cli.Context) error {
 			// Parse args and build node
@@ -112,6 +116,7 @@ func GetCliCommand() *cli.Command {
 				OrchAddr:         cCtx.String("orchestrator"),
 				ArbitraryActions: cCtx.Bool("arbitrary-actions"),
 				MaxNumActions:    cCtx.Int("max-actions"),
+				CertPath:         cCtx.String("cert-path"),
 			}
 
 			// Setup logging

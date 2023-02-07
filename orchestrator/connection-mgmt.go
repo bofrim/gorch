@@ -3,6 +3,7 @@ package orchestrator
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -22,14 +23,20 @@ type NodeConnection struct {
 }
 
 func (nc *NodeConnection) RequestAction(actionName string, reqBody []byte) ([]byte, error) {
-	url := fmt.Sprintf("http://%s:%d/action/%s", nc.Address, nc.Port, actionName)
+	url := fmt.Sprintf("https://%s:%d/action/%s", nc.Address, nc.Port, actionName)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
@@ -50,7 +57,7 @@ func (nc *NodeConnection) RequestAction(actionName string, reqBody []byte) ([]by
 }
 
 func (nc *NodeConnection) GetRequest(reqBody []byte, path string) ([]byte, error) {
-	url := fmt.Sprintf("http://%s:%d/%s", nc.Address, nc.Port, path)
+	url := fmt.Sprintf("https://%s:%d/%s", nc.Address, nc.Port, path)
 	log.Printf("Get request for: %s", url)
 	req, err := http.NewRequest("GET", url, bytes.NewBuffer(reqBody))
 	if err != nil {
@@ -58,7 +65,13 @@ func (nc *NodeConnection) GetRequest(reqBody []byte, path string) ([]byte, error
 		return nil, err
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)

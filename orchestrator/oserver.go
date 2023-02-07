@@ -93,7 +93,7 @@ func OServerThread(orchestrator *Orchestrator, ctx context.Context, logger *slog
 		}
 
 		logger.Info("Redirecting get request.", slog.String("node", nodeConn.Name), slog.String("params", c.Params("*")))
-		nodeUrl := fmt.Sprintf("http://%s:%d/%s", nodeConn.Address, nodeConn.Port, c.Params("*"))
+		nodeUrl := fmt.Sprintf("https://%s:%d/%s", nodeConn.Address, nodeConn.Port, c.Params("*"))
 		return c.Redirect(nodeUrl, fiber.StatusTemporaryRedirect)
 	})
 
@@ -106,7 +106,7 @@ func OServerThread(orchestrator *Orchestrator, ctx context.Context, logger *slog
 		}
 
 		logger.Info("Redirecting post request.", slog.String("node", nodeConn.Name), slog.String("params", c.Params("*")))
-		nodeUrl := fmt.Sprintf("http://%s:%d/%s", nodeConn.Address, nodeConn.Port, c.Params("*"))
+		nodeUrl := fmt.Sprintf("https://%s:%d/%s", nodeConn.Address, nodeConn.Port, c.Params("*"))
 		return c.Redirect(nodeUrl, fiber.StatusTemporaryRedirect)
 	})
 

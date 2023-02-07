@@ -24,6 +24,7 @@ type Node struct {
 	ArbitraryActions bool
 	LogFile          string
 	MaxNumActions    int
+	CertPath         string
 	actionSem        *semaphore.Weighted
 }
 

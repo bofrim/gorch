@@ -169,7 +169,8 @@ Where `adhoc.json` is:
 - [ ] Gracefully handle errors in the actions
 
 - [ ] webhook for action completion
-- [ ] TLS
+- [ ] Generate TLS certs on the fly
+- [ ] TLS for action streaming
 - [ ] some basic form of auth even if it's just a shared secret
 - [ ] a flag to chose if its able to run on a real network
 - [ ] Ability to list currently running actions (with info about them; params, age, etc)
