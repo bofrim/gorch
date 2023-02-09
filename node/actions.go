@@ -56,7 +56,7 @@ func (a Action) Run(params any) ([]string, error) {
 	for i, c := range commands {
 		args := strings.Fields(c)
 		cmd := exec.Command(args[0], args[1:]...)
-		out, err := cmd.Output()
+		out, err := cmd.CombinedOutput()
 		if err != nil {
 			return nil, err
 		}
@@ -84,7 +84,7 @@ func (a Action) RunStreamed(streamDest string, params any, logger *slog.Logger) 
 	for _, c := range commands {
 		args := strings.Fields(c)
 		cmd := exec.Command(args[0], args[1:]...)
-		out, err := cmd.Output()
+		out, err := cmd.CombinedOutput()
 		if err != nil {
 			logger.Error("Failed to get output for action command.", err,
 				slog.String("action", a.Name),
