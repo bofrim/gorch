@@ -13,7 +13,6 @@ import (
 
 type Node struct {
 	Name             string
-	ServerAddr       string
 	ServerPort       int
 	DataDir          string
 	Data             map[string]map[string]interface{}

@@ -38,6 +38,9 @@ func OServerThread(orchestrator *Orchestrator, ctx context.Context, logger *slog
 			log.Printf("Body: %s", c.Body())
 			return err
 		}
+		if r.NodeAddr == "" {
+			r.NodeAddr = c.IP()
+		}
 		_, ok := orchestrator.Nodes[r.NodeName]
 		if ok {
 			logger.Info("Node already registered.",
@@ -55,7 +58,9 @@ func OServerThread(orchestrator *Orchestrator, ctx context.Context, logger *slog
 			orchestrator.Nodes[r.NodeName] = &conn
 			log.Printf("Orchestrator now has %d nodes registered.\n", len(orchestrator.Nodes))
 			logger.Info("Registered node.",
-				slog.String("node", r.NodeName),
+				slog.String("node", conn.Name),
+				slog.String("node_address", conn.Address),
+				slog.Int("node_port", conn.Port),
 				slog.Int("num_nodes", len(orchestrator.Nodes)),
 			)
 			return nil
@@ -105,7 +110,12 @@ func OServerThread(orchestrator *Orchestrator, ctx context.Context, logger *slog
 			return c.SendString(fmt.Sprintf("Node %s not registered.", node))
 		}
 
-		logger.Info("Redirecting post request.", slog.String("node", nodeConn.Name), slog.String("params", c.Params("*")))
+		logger.Info("Redirecting post request.",
+			slog.String("node", nodeConn.Name),
+			slog.String("params", c.Params("*")),
+			slog.String("address", nodeConn.Address),
+			slog.Int("port", nodeConn.Port),
+		)
 		nodeUrl := fmt.Sprintf("https://%s:%d/%s", nodeConn.Address, nodeConn.Port, c.Params("*"))
 		return c.Redirect(nodeUrl, fiber.StatusTemporaryRedirect)
 	})

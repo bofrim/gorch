@@ -48,7 +48,7 @@ func NodeStateThread(n *Node, ctx context.Context, logger *slog.Logger, done fun
 
 	if n.OrchAddr != "" {
 		n.nodeState.commState = Polling
-		if err := register(n.OrchAddr, n.Name, n.ServerAddr, n.ServerPort); err == nil {
+		if err := register(n.OrchAddr, n.Name, n.ServerPort); err == nil {
 			logger.Debug("Start-up registration.", slog.String("node", n.Name))
 			n.nodeState.commState = Registered
 		}
@@ -70,7 +70,7 @@ func NodeStateThread(n *Node, ctx context.Context, logger *slog.Logger, done fun
 				}
 				fallthrough
 			case Polling:
-				if err := register(n.OrchAddr, n.Name, n.ServerAddr, n.ServerPort); err == nil {
+				if err := register(n.OrchAddr, n.Name, n.ServerPort); err == nil {
 					n.nodeState.ChangeState(Registered)
 				}
 			case Registered:
@@ -98,12 +98,11 @@ func NodeStateThread(n *Node, ctx context.Context, logger *slog.Logger, done fun
 	}
 }
 
-func register(orchAddr, nodeName string, nodeAddr string, nodePort int) error {
+func register(orchAddr, nodeName string, nodePort int) error {
 	// Register with the orchestrator
 	url := fmt.Sprintf("https://%s/register/", orchAddr)
 	data := orchestrator.NodeRegistration{
 		NodeName: nodeName,
-		NodeAddr: nodeAddr,
 		NodePort: nodePort,
 	}
 	b, err := json.Marshal(data)
@@ -134,7 +133,7 @@ func register(orchAddr, nodeName string, nodeAddr string, nodePort int) error {
 		log.Println(err.Error())
 		return err
 	}
-	log.Printf("Registered as [%s (%s:%d)] to [%s]", nodeName, nodeAddr, nodePort, orchAddr)
+	log.Printf("Registered as [%s] on [%s]", nodeName, orchAddr)
 	return nil
 }
 

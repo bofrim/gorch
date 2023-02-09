@@ -16,10 +16,10 @@ import (
 const DisconnectStaleNodePeriod = 10 * time.Second
 
 type NodeConnection struct {
-	Name            string
-	Address         string
-	Port            int
-	LastInteraction time.Time
+	Name            string    `json:"name"`
+	Address         string    `json:"address"`
+	Port            int       `json:"port"`
+	LastInteraction time.Time `json:"last_interaction"`
 }
 
 func (nc *NodeConnection) RequestAction(actionName string, reqBody []byte) ([]byte, error) {

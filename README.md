@@ -183,5 +183,3 @@ Where `adhoc.json` is:
 
 - [ ] a broadcast command to run action a set of nodes
 - [ ] number of actions running to be specified on a group of actions rather than the entire node (i.e. should be able to run status action if there is a long running worker action)
-- [ ] BUG: Nodes are registering as 127.0.0.1 because its the default host; use IP or request if not specified
-- [ ] NodeConnection should have json annotations

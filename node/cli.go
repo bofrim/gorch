@@ -91,7 +91,7 @@ func GetCliCommand() *cli.Command {
 			},
 			&cli.StringFlag{
 				Name:     "cert-path",
-				Usage:    "Specify a path with ssl.crt and ssl.key files",
+				Usage:    "Specify a path with ssl.crt and ssl.key files.",
 				Required: true,
 			},
 		},
@@ -110,7 +110,6 @@ func GetCliCommand() *cli.Command {
 			node := Node{
 				Name:             cCtx.String("name"),
 				ServerPort:       cCtx.Int("port"),
-				ServerAddr:       cCtx.String("host"),
 				DataDir:          absDataPath,
 				ActionsPath:      absActionPath,
 				OrchAddr:         cCtx.String("orchestrator"),
