@@ -164,22 +164,25 @@ Where `adhoc.json` is:
 
 ## TODO
 
-- [ ] Add a way to specify a configuration file for a node
-- [ ] Add a way to run periodic actions on a node (should be an optional configuration option for a node) Figure out what to do with the output of the action.
-- [ ] Setup web hooks for data changes or events related to actions
-- [ ] Setup centralized logging for nodes so logs will be accessible through the orchestrator even if the node is offline
-- [ ] Add a user command to stream logs from either the orchestrator or a specific node
-- [ ] Gracefully handle errors in the actions
-- [ ] Hook listeners should have IDs for actions that are tracked on the node side
+### High Priority
 
-- [ ] webhook for action completion
-- [ ] Generate TLS certs on the fly
-- [ ] TLS for action streaming
-- [ ] some basic form of auth even if it's just a shared secret
-- [ ] a flag to chose if its able to run on a real network
+- [ ] Setup centralized logging for nodes so logs will be accessible through the orchestrator even if the node is offline
+- [ ] Generate TLS certs on the fly (simplify setup/dependencies)
+- [ ] some basic form of auth even if it's just a shared secret that gets generated at node/orch startup
 - [ ] Ability to list currently running actions (with info about them; params, age, etc)
 - [ ] Ability to kill a running action
 - [ ] a front end for the orchestrator and nodes
-
-- [ ] a broadcast command to run action a set of nodes
 - [ ] number of actions running to be specified on a group of actions rather than the entire node (i.e. should be able to run status action if there is a long running worker action)
+
+### Nice to have
+
+- [ ] Add a way to specify a configuration file for a node
+- [ ] Add a way to run periodic actions on a node (should be an optional configuration option for a node) Figure out what to do with the output of the action.
+- [ ] Setup web hooks for data changes or events related to actions
+- [ ] Add a user command to stream logs from either the orchestrator or a specific node
+- [ ] Gracefully handle errors in the actions
+- [ ] Hook listeners should have IDs for actions that are tracked on the node side
+- [ ] webhook for action completion
+- [ ] TLS for action streaming
+- [ ] a flag to chose if its able to run on a real network
+- [ ] a broadcast command to run action a set of nodes

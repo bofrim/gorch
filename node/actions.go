@@ -86,12 +86,15 @@ func (a Action) RunStreamed(streamDest string, params any, logger *slog.Logger) 
 		cmd := exec.Command(args[0], args[1:]...)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
-			logger.Error("Failed to get output for action command.", err,
+			logger.Error("Error while running command.", err,
 				slog.String("action", a.Name),
 				slog.String("command", c),
 				slog.Any("params", params),
 			)
-			return err
+			hc.Send([]byte(err.Error()))
+			// TODO: if this was an error with actually starting the command, we probably don't want to continue
+			// In that case, send it, then return
+			// return err
 		}
 		if err := hc.Send(out); err != nil {
 			logger.Error("Failed to send output for action command.", err,

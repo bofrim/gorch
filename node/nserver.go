@@ -91,7 +91,7 @@ func NServerThread(node *Node, ctx context.Context, logger *slog.Logger, done fu
 		// Parse the info from the request
 		body, sDest, err := parseActionBody(c)
 		if err != nil {
-			logger.Error("Failed to parse body", err)
+			logger.Error("Failed to parse body for adhoc", err)
 			return c.Status(http.StatusBadRequest).Send([]byte(err.Error()))
 		}
 
@@ -192,13 +192,19 @@ func NServerThread(node *Node, ctx context.Context, logger *slog.Logger, done fu
 }
 
 func parseActionBody(c *fiber.Ctx) (body map[string]string, sDest string, err error) {
+	body = map[string]string{}
 	if c.Body() != nil {
-		err := json.Unmarshal(c.Body(), &body)
+		var m map[string]interface{}
+		err := json.Unmarshal(c.Body(), &m)
 		if err != nil {
 			return nil, sDest, err
 		}
-	} else {
-		body = map[string]string{}
+		for k, v := range m {
+			// Skip the "action"; it will be dealt with elsewhere
+			if k != "action" {
+				body[k] = v.(string)
+			}
+		}
 	}
 	if body["stream_addr"] != "" && body["stream_port"] != "" {
 		sAddr := body["stream_addr"]
