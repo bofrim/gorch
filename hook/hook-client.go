@@ -55,13 +55,9 @@ func (h *HookClient) Start() error {
 			select {
 			case body := <-h.UpdateChan:
 				h.outputLog = append(h.outputLog, body)
-				if err := h.update(body); err != nil {
-					fmt.Println(err)
-				}
+				h.update(body)
 			case <-keepAliveTicker.C:
-				if err := h.sendKeepAlive(); err != nil {
-					fmt.Println(err)
-				}
+				h.sendKeepAlive()
 			case <-h.ctx.Done():
 				keepAliveTicker.Stop()
 				if err := h.finish(); err != nil {
@@ -106,7 +102,6 @@ func (h *HookClient) post(url string, body []byte) error {
 
 	resp, err := h.client.Do(req)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	if resp.StatusCode != http.StatusOK {

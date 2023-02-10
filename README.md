@@ -169,8 +169,8 @@ Where `adhoc.json` is:
 - [ ] Setup web hooks for data changes or events related to actions
 - [ ] Setup centralized logging for nodes so logs will be accessible through the orchestrator even if the node is offline
 - [ ] Add a user command to stream logs from either the orchestrator or a specific node
-- [ ] Fix the hook listener so that it'll timeout if it doesn't receive a response from the node within a certain amount of time
 - [ ] Gracefully handle errors in the actions
+- [ ] Hook listeners should have IDs for actions that are tracked on the node side
 
 - [ ] webhook for action completion
 - [ ] Generate TLS certs on the fly
