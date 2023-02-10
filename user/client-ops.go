@@ -60,9 +60,8 @@ func StreamAction(addr string, node string, streamPort int, action string, data 
 	}
 
 	// Start a hook listener
-	h := hook.HookListener{}
+	h := hook.NewHookListener()
 	return h.Listen(streamPort)
-
 }
 
 func RequestData(addr string, node string, path string) ([]byte, error) {

@@ -1,8 +1,10 @@
 package hook
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,13 +13,62 @@ import (
 const HookListenIdleTimeout = 10 * time.Second
 const HookListenShutdownTimeout = 500 * time.Millisecond
 
-type HookListener struct{}
+type HookListener struct{ ticker *time.Ticker }
+
+func NewHookListener() HookListener {
+	return HookListener{
+		ticker: time.NewTicker(HookListenIdleTimeout),
+	}
+}
 
 func (h *HookListener) Listen(port int) error {
+	var wg sync.WaitGroup
+	ctx, cancel := context.WithCancel(context.Background())
+	done := func() {
+		wg.Done()
+		cancel()
+	}
+
+	wg.Add(1)
+	go HookServerThread(h, port, ctx, done)
+
+	wg.Add(1)
+	go h.WatchDog(ctx, done)
+
+	wg.Wait()
+	cancel()
+	return nil
+}
+
+func (h *HookListener) WatchDog(ctx context.Context, done func()) {
+	defer done()
+	for {
+		select {
+		case <-h.ticker.C:
+			log.Println("Hook Watch Dog tripped!")
+			return
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (h *HookListener) Feed() {
+	h.ticker.Reset(HookListenIdleTimeout)
+}
+
+func HookServerThread(h *HookListener, port int, ctx context.Context, done func()) {
+	defer done()
+
 	app := fiber.New(fiber.Config{
-		IdleTimeout:           HookListenIdleTimeout, // TODO: This is not working; find a better way
 		DisableStartupMessage: true,
 	})
+	// Ensure a graceful shutdown of the server
+	go func() {
+		<-ctx.Done()
+		app.Shutdown()
+	}()
+
 	app.Post("/update", func(c *fiber.Ctx) error {
 		body := c.Body()
 		fmt.Println(string(body))
@@ -25,6 +76,7 @@ func (h *HookListener) Listen(port int) error {
 	})
 	app.Post("/keepalive", func(c *fiber.Ctx) error {
 		log.Println("Got Keepalive request.")
+		h.Feed()
 		return c.SendString("ack")
 	})
 
@@ -34,5 +86,5 @@ func (h *HookListener) Listen(port int) error {
 		}()
 		return c.SendString("ack")
 	})
-	return app.Listen(fmt.Sprintf(":%d", port))
+	app.Listen(fmt.Sprintf(":%d", port))
 }

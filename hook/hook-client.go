@@ -59,7 +59,7 @@ func (h *HookClient) Start() error {
 					fmt.Println(err)
 				}
 			case <-keepAliveTicker.C:
-				if err := h.keepalive(); err != nil {
+				if err := h.sendKeepAlive(); err != nil {
 					fmt.Println(err)
 				}
 			case <-h.ctx.Done():
@@ -86,7 +86,7 @@ func (h *HookClient) update(body []byte) error {
 	return h.post(url, body)
 }
 
-func (h *HookClient) keepalive() error {
+func (h *HookClient) sendKeepAlive() error {
 	url := fmt.Sprintf("http://%s/keepalive", h.Address)
 	return h.post(url, []byte{})
 }
