@@ -5,7 +5,7 @@
 **Warning**: By definition portions of this module will be used for remote code execution. Ensure you understand the security implications of this before using this module.
 
 <p align="center">
-  <img src="https://cdn.discordapp.com/attachments/1055542894221602816/1067475495580610590/image.png" alt="gorch mascot" width="200"/>
+  <img src="https://camo.githubusercontent.com/6c1c0bcd2e3902a9f5a79c750a6813f97a76749ba282dafdb9b6bad28b06d6f5/68747470733a2f2f63646e2e646973636f72646170702e636f6d2f6174746163686d656e74732f313035353534323839343232313630323831362f313036373437353439353538303631303539302f696d6167652e706e67" alt="gorch mascot" width="200"/>
 </p>
 
 ## About
@@ -47,6 +47,7 @@ name: "cool_node_1"
 orchestrator: "127.0.0.1:443"
 port: 8776 # optional
 arbitrary-actions: true # Optional; Danger: allows arbitrary code execution
+log-level: "INFO" # options from slog.Level: DEBUG, INFO, WARN, ERROR
 
 actions:
   "list":
