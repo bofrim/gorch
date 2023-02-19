@@ -49,6 +49,12 @@ port: 8776 # optional
 arbitrary-actions: true # Optional; Danger: allows arbitrary code execution
 log-level: "INFO" # options from slog.Level: DEBUG, INFO, WARN, ERROR
 
+action-groups:
+  "total": 5
+  "default": 0
+  "hardware": 1
+  "status": 100
+
 actions:
   "list":
     description: "List the contents of a directory"

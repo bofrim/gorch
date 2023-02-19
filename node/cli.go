@@ -20,10 +20,10 @@ type NodeConfig struct {
 	Data             string             `yaml:"data"`
 	Log              string             `yaml:"log"`
 	LogLevel         string             `yaml:"log-level"`
-	MaxNumActions    int                `yaml:"max-actions"`
 	CertPath         string             `yaml:"cert-path"`
 	ArbitraryActions bool               `yaml:"arbitrary-actions"`
 	Actions          map[string]*Action `yaml:"actions"`
+	ActionGroups     map[string]int     `yaml:"action-groups"`
 }
 
 func NewNodeConfig() *NodeConfig {
@@ -32,9 +32,33 @@ func NewNodeConfig() *NodeConfig {
 		Port:             443,
 		Host:             "127.0.0.1",
 		ArbitraryActions: false,
-		MaxNumActions:    1000,
 		LogLevel:         "INFO",
+		ActionGroups: map[string]int{
+			"total":   100,
+			"default": 0,
+		},
 	}
+}
+
+func (c *NodeConfig) ReadConfig(path string) error {
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		slog.Default().Error("Error loading node config file.", err, slog.String("path", path))
+		return err
+	}
+	if err := yaml.Unmarshal(data, c); err != nil {
+		slog.Default().Error("Error parsing node config.", err, slog.String("path", path))
+		return err
+	}
+
+	// If action names aren't explicitly specified, fill them in
+	for name, a := range c.Actions {
+		if a.Name == "" {
+			a.Name = name
+		}
+	}
+	return nil
 }
 
 func GetCliCommand() *cli.Command {
@@ -56,22 +80,16 @@ func GetCliCommand() *cli.Command {
 		},
 		Action: func(cCtx *cli.Context) error {
 			// Get config file location from cli
-			absConfigPath := ""
-			if cCtx.String("config") != "" {
-				absConfigPath, _ = filepath.Abs(cCtx.String("config"))
-			}
-
-			// Read config file from disk
-			configFile, err := os.ReadFile(absConfigPath)
+			absConfigPath, err := filepath.Abs(cCtx.String("config"))
 			if err != nil {
-				slog.Default().Error("Error loading node config file.", err, slog.String("path", absConfigPath))
+				slog.Default().Error("Can't get abs path for config.", err)
 				return err
 			}
 
 			// Parse the config file
 			config := NewNodeConfig()
-			if err := yaml.Unmarshal(configFile, &config); err != nil {
-				slog.Default().Error("Error parsing node config.", err, slog.String("path", absConfigPath))
+			if err := config.ReadConfig(absConfigPath); err != nil {
+				slog.Default().Error("Can't read config.", err)
 				return err
 			}
 
@@ -79,13 +97,6 @@ func GetCliCommand() *cli.Command {
 			absDataPath := ""
 			if config.Data != "" {
 				absDataPath, _ = filepath.Abs(config.Data)
-			}
-
-			// Put together the actions map
-			for name, a := range config.Actions {
-				if a.Name == "" {
-					a.Name = name
-				}
 			}
 
 			// Construct the node
@@ -96,7 +107,7 @@ func GetCliCommand() *cli.Command {
 				Actions:          config.Actions,
 				OrchAddr:         config.Orchestrator,
 				ArbitraryActions: config.ArbitraryActions,
-				MaxNumActions:    config.MaxNumActions,
+				MaxNumActions:    config.ActionGroups["total"],
 				CertPath:         config.CertPath,
 			}
 
