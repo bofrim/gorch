@@ -13,17 +13,17 @@ import (
 )
 
 type NodeConfig struct {
-	Name             string `yaml:"name"`
-	Port             int    `yaml:"port"`
-	Host             string `yaml:"host"`
-	Orchestrator     string `yaml:"orchestrator"`
-	Data             string `yaml:"data"`
-	Actions          string `yaml:"actions"`
-	ArbitraryActions bool   `yaml:"arbitrary-actions"`
-	Log              string `yaml:"log"`
-	LogLevel         string `yaml:"log-level"`
-	MaxNumActions    int    `yaml:"max-actions"`
-	CertPath         string `yaml:"cert-path"`
+	Name             string             `yaml:"name"`
+	Port             int                `yaml:"port"`
+	Host             string             `yaml:"host"`
+	Orchestrator     string             `yaml:"orchestrator"`
+	Data             string             `yaml:"data"`
+	Log              string             `yaml:"log"`
+	LogLevel         string             `yaml:"log-level"`
+	MaxNumActions    int                `yaml:"max-actions"`
+	CertPath         string             `yaml:"cert-path"`
+	ArbitraryActions bool               `yaml:"arbitrary-actions"`
+	Actions          map[string]*Action `yaml:"actions"`
 }
 
 func NewNodeConfig() *NodeConfig {
@@ -80,10 +80,12 @@ func GetCliCommand() *cli.Command {
 			if config.Data != "" {
 				absDataPath, _ = filepath.Abs(config.Data)
 			}
-			// Find the absolute path to the actions file
-			absActionPath := ""
-			if config.Actions != "" {
-				absActionPath, _ = filepath.Abs(config.Actions)
+
+			// Put together the actions map
+			for name, a := range config.Actions {
+				if a.Name == "" {
+					a.Name = name
+				}
 			}
 
 			// Construct the node
@@ -91,7 +93,7 @@ func GetCliCommand() *cli.Command {
 				Name:             config.Name,
 				ServerPort:       config.Port,
 				DataDir:          absDataPath,
-				ActionsPath:      absActionPath,
+				Actions:          config.Actions,
 				OrchAddr:         config.Orchestrator,
 				ArbitraryActions: config.ArbitraryActions,
 				MaxNumActions:    config.MaxNumActions,

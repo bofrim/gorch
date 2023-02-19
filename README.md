@@ -43,38 +43,32 @@ go build -o gorch gorch.go
 # config.yaml
 cert-path: "/path/to/pem/certs"
 data: "/some/path/to/data_dir"
-actions: "/some/path/to/actions.yaml"
 name: "cool_node_1"
 orchestrator: "127.0.0.1:443"
 port: 8776 # optional
 arbitrary-actions: true # Optional; Danger: allows arbitrary code execution
-```
 
-#### Setting up an actions file for a node
+actions:
+  "list":
+    description: "List the contents of a directory"
+    params: []
+    commands:
+      - "ls"
 
-```yaml
-# actions.yaml
+  "echo":
+    description: "A command that will allow you to print a message"
+    params: ["message", "other"]
+    commands:
+      - "echo {{.message}}"
+      - "echo {{.other}}"
 
-"list":
-  description: "List the contents of a directory"
-  params: []
-  commands:
-    - "ls"
-
-"hello":
-  description: "Print a message"
-  params: ["message", "other"]
-  commands:
-    - "echo {{.message}}"
-    - "echo {{.other}}"
-
-"sleep":
-  description: "Send a message, sleep, then send another message"
-  params: ["time"]
-  commands:
-    - "date"
-    - "sleep {{.time}}"
-    - "date"
+  "sleep":
+    description: "A command that will sleep"
+    params: ["time"]
+    commands:
+      - "date"
+      - "sleep {{.time}}"
+      - "date"
 ```
 
 ### Running user operations
