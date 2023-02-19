@@ -21,7 +21,7 @@ func (orchestrator *Orchestrator) Run() (err error) {
 	}
 	var logger *slog.Logger
 	var closeFn func()
-	if logger, closeFn, err = utils.SetupLogging(orchestrator.LogFile); err != nil {
+	if logger, closeFn, err = utils.SetupLogging(orchestrator.LogFile, slog.LevelDebug); err != nil {
 		return err
 	}
 	defer closeFn()

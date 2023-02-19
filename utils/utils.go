@@ -10,7 +10,7 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-func SetupLogging(destination string) (*slog.Logger, func(), error) {
+func SetupLogging(destination string, level slog.Level) (*slog.Logger, func(), error) {
 	var logDest io.Writer
 	var file *os.File
 	if destination == "" {
@@ -25,7 +25,7 @@ func SetupLogging(destination string) (*slog.Logger, func(), error) {
 	}
 
 	opts := slog.HandlerOptions{
-		Level: slog.LevelDebug,
+		Level: level,
 	}
 	textHandler := opts.NewTextHandler(logDest)
 	logger := slog.New(textHandler)

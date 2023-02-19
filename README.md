@@ -36,15 +36,18 @@ go build -o gorch gorch.go
 ### Running a node
 
 ```bash
-./gorch node \
-  --cert-path /path/to/pem/certs \
-  --data /some/path/to/data_dir \
-  --actions /some/path/to/actions.yaml \
-  --name cool_node_1 \
-  --orchestrator "127.0.0.1:443" \
-  --port 8776 \ # optional
-  --arbitrary-actions # Optional; Danger: allows arbitrary code execution
+./gorch node --config /path/to/config.yaml
+```
 
+```yaml
+# config.yaml
+cert-path: "/path/to/pem/certs"
+data: "/some/path/to/data_dir"
+actions: "/some/path/to/actions.yaml"
+name: "cool_node_1"
+orchestrator: "127.0.0.1:443"
+port: 8776 # optional
+arbitrary-actions: true # Optional; Danger: allows arbitrary code execution
 ```
 
 #### Setting up an actions file for a node
@@ -164,15 +167,19 @@ Where `adhoc.json` is:
 
 ## TODO
 
+### MVP
+
+- [ ] a way to query available resource groups on a tester
+- [ ] some basic form of auth even if it's just a shared secret that gets generated at node/orch startup
+- [ ] resource groups to specify the number of actions allowed to be running within the group (i.e. should be able to run status action if there is a long running worker action). should also work with adhoc actions
+
 ### High Priority
 
 - [ ] Setup centralized logging for nodes so logs will be accessible through the orchestrator even if the node is offline
 - [ ] Generate TLS certs on the fly (simplify setup/dependencies)
-- [ ] some basic form of auth even if it's just a shared secret that gets generated at node/orch startup
 - [ ] Ability to list currently running actions (with info about them; params, age, etc)
 - [ ] Ability to kill a running action
 - [ ] a front end for the orchestrator and nodes
-- [ ] number of actions running to be specified on a group of actions rather than the entire node (i.e. should be able to run status action if there is a long running worker action)
 
 ### Nice to have
 
