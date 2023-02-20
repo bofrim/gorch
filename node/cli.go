@@ -6,11 +6,18 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/bofrim/gorch/node/resources"
 	"github.com/bofrim/gorch/utils"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/exp/slog"
 	"gopkg.in/yaml.v3"
 )
+
+// By default number of concurrent actions
+const ActionGroupTotalDefault = 100
+
+// Default number of actions that do not specify an action group
+const ActionGroupDefaultDefault = 0
 
 type NodeConfig struct {
 	Name             string             `yaml:"name"`
@@ -23,7 +30,7 @@ type NodeConfig struct {
 	CertPath         string             `yaml:"cert-path"`
 	ArbitraryActions bool               `yaml:"arbitrary-actions"`
 	Actions          map[string]*Action `yaml:"actions"`
-	ActionGroups     map[string]int     `yaml:"action-groups"`
+	ResourceGroups   map[string]int64   `yaml:"resource-groups"`
 }
 
 func NewNodeConfig() *NodeConfig {
@@ -33,10 +40,6 @@ func NewNodeConfig() *NodeConfig {
 		Host:             "127.0.0.1",
 		ArbitraryActions: false,
 		LogLevel:         "INFO",
-		ActionGroups: map[string]int{
-			"total":   100,
-			"default": 0,
-		},
 	}
 }
 
@@ -107,8 +110,9 @@ func GetCliCommand() *cli.Command {
 				Actions:          config.Actions,
 				OrchAddr:         config.Orchestrator,
 				ArbitraryActions: config.ArbitraryActions,
-				MaxNumActions:    config.ActionGroups["total"],
+				MaxNumActions:    int(config.ResourceGroups["total"]),
 				CertPath:         config.CertPath,
+				Resources:        resources.NewResourceManager(config.ResourceGroups),
 			}
 
 			// Setup logging

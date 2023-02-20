@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/bofrim/gorch/node/resources"
 	"golang.org/x/exp/slog"
 	"golang.org/x/sync/semaphore"
 )
@@ -25,6 +26,7 @@ type Node struct {
 	MaxNumActions    int
 	CertPath         string
 	actionSem        *semaphore.Weighted
+	Resources        *resources.ResourceManager
 }
 
 func (node *Node) Run(logger *slog.Logger) (err error) {

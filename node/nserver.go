@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -146,15 +145,6 @@ func NServerThread(node *Node, ctx context.Context, logger *slog.Logger, done fu
 			)
 		}
 		return c.SendString(out)
-	})
-
-	app.Post(("/reload/"), func(c *fiber.Ctx) error {
-		logger.Debug("Reload actions.")
-		if _, err := os.Stat(node.ActionsPath); os.IsNotExist(err) {
-			return c.SendStatus(fiber.StatusNotFound)
-		}
-		node.ReloadActions(node.ActionsPath)
-		return c.SendStatus(fiber.StatusOK)
 	})
 
 	// Run the App

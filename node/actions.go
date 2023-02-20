@@ -17,10 +17,11 @@ import (
 const StreamTeardownDelay = 250 * time.Millisecond
 
 type Action struct {
-	Name        string   `yaml:"name" json:"name"`
-	Params      []string `yaml:"params" json:"params"`
-	Commands    []string `yaml:"commands" json:"commands"`
-	Description string   `yaml:"description" json:"description"`
+	Name        string          `yaml:"name" json:"name"`
+	Params      []string        `yaml:"params" json:"params"`
+	Commands    []string        `yaml:"commands" json:"commands"`
+	Description string          `yaml:"description" json:"description"`
+	Resources   ResourceRequest `yaml:"resources" json:"resource"`
 }
 
 type AdHocAction struct {
