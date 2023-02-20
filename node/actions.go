@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/bofrim/gorch/hook"
+	"github.com/bofrim/gorch/node/resources"
 	"golang.org/x/exp/slog"
 	"gopkg.in/yaml.v3"
 )
@@ -17,11 +18,11 @@ import (
 const StreamTeardownDelay = 250 * time.Millisecond
 
 type Action struct {
-	Name        string          `yaml:"name" json:"name"`
-	Params      []string        `yaml:"params" json:"params"`
-	Commands    []string        `yaml:"commands" json:"commands"`
-	Description string          `yaml:"description" json:"description"`
-	Resources   ResourceRequest `yaml:"resources" json:"resource"`
+	Name        string                    `yaml:"name" json:"name"`
+	Params      []string                  `yaml:"params" json:"params"`
+	Commands    []string                  `yaml:"commands" json:"commands"`
+	Description string                    `yaml:"description" json:"description"`
+	ResourceReq resources.ResourceRequest `yaml:"resources" json:"resource"`
 }
 
 type AdHocAction struct {

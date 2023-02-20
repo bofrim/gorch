@@ -168,6 +168,10 @@ Where `adhoc.json` is:
 
 ## TODO
 
+### BUGS
+
+- [ ] sending a sleep action, then sending an echo will cause the echo to override the sleep and return on the sleep's stream if the steam port is the same
+
 ### MVP
 
 - [ ] a way to query available resource groups on a tester

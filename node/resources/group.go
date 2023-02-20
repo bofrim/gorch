@@ -16,7 +16,7 @@ func NewResourceGroup(name string, count int64) *ResourceGroup {
 	return &ResourceGroup{
 		ResourceBase: ResourceBase{
 			Name:  name,
-			count: count,
+			Count: count,
 		},
 		semaphore: *semaphore.NewWeighted(count),
 		held:      0,
@@ -32,7 +32,7 @@ func NewResourceGroupMap(m map[string]int64) map[string]*ResourceGroup {
 }
 
 func (r *ResourceGroup) GetCount() int64 {
-	return r.count
+	return r.Count
 }
 
 func (r *ResourceGroup) GetHeld() int64 {

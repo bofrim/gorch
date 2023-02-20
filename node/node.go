@@ -9,7 +9,6 @@ import (
 
 	"github.com/bofrim/gorch/node/resources"
 	"golang.org/x/exp/slog"
-	"golang.org/x/sync/semaphore"
 )
 
 type Node struct {
@@ -25,13 +24,11 @@ type Node struct {
 	LogFile          string
 	MaxNumActions    int
 	CertPath         string
-	actionSem        *semaphore.Weighted
 	Resources        *resources.ResourceManager
 }
 
 func (node *Node) Run(logger *slog.Logger) (err error) {
 	// Initialize Node
-	node.actionSem = semaphore.NewWeighted(int64(node.MaxNumActions))
 	logger.Debug("Created node semaphore.", slog.Int("count", node.MaxNumActions))
 
 	// Load data
@@ -89,29 +86,29 @@ func (node *Node) ReloadActions(path string) error {
 
 func (node *Node) RunAction(action *Action, streamDest string, params map[string]string, logger *slog.Logger) (out string, semOk bool, err error) {
 	// First try to acquire the semaphore
-	semOk = node.actionSem.TryAcquire(1)
-	if !semOk {
-		return out, semOk, err
+	hid, err := node.Resources.TryAcquireRequest(&action.ResourceReq)
+	if err != nil {
+		return out, false, err
 	} else {
 		// Next run the action
 		// Ensure the semaphore is always released!
 		if streamDest == "" {
-			// Release asap
-			defer node.actionSem.Release(1)
+			// Defer so that it gets released after the action runs
+			defer node.Resources.ReleaseHandle(hid)
 			outputs, err := action.Run(params)
 			if err != nil {
-				return out, semOk, err
+				return out, true, err
 			}
 			out = strings.Join(outputs, "\n")
 		} else {
 			go func() {
-				// Release when the action finishes
-				defer node.actionSem.Release(1)
+				// Release when the go routine finishes after action streaming
+				defer node.Resources.ReleaseHandle(hid)
 				action.RunStreamed(streamDest, params, logger)
 			}()
 			out = fmt.Sprintf("Streaming action output to %s", streamDest)
 		}
 	}
 
-	return out, semOk, err
+	return out, true, err
 }

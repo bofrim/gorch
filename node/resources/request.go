@@ -1,21 +1,31 @@
 package resources
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"gopkg.in/yaml.v3"
+)
 
 type ResourceRequest struct {
-	ResourceBase
+	Resources map[string]*ResourceBase
 }
 
-func (r *ResourceRequest) UnmarshalJSON(data []byte) error {
-
-	var v []interface{}
-	if err := json.Unmarshal(data, &v); err != nil {
+func (r *ResourceRequest) UnmarshalYAML(node *yaml.Node) error {
+	var m map[string]int64
+	if err := node.Decode(&m); err != nil {
 		return err
 	}
 
-	b.Price, _ = v[0].(string)
-	b.Size, _ = v[1].(string)
-	b.NumOrders = int(v[2].(float64))
+	r.Resources = NewResourceBaseMap(m)
+	return nil
+}
 
+func (r *ResourceRequest) UnmarshalJSON(data []byte) error {
+	var m map[string]int64
+	if err := json.Unmarshal(data, &m); err != nil {
+		return err
+	}
+
+	r.Resources = NewResourceBaseMap(m)
 	return nil
 }

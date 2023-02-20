@@ -104,13 +104,13 @@ func NServerThread(node *Node, ctx context.Context, logger *slog.Logger, done fu
 
 		// Run the action
 		out, ok, err := node.RunAction(&action, sDest, body, logger)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString(err.Error())
-		}
 		if !ok {
 			return c.Status(fiber.StatusServiceUnavailable).SendString(
 				fmt.Sprintf("%d actions already running", node.MaxNumActions),
 			)
+		}
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 		}
 		return c.SendString(out)
 	})
@@ -136,13 +136,13 @@ func NServerThread(node *Node, ctx context.Context, logger *slog.Logger, done fu
 
 		// Run the action
 		out, ok, err := node.RunAction(action, sDest, body, logger)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString(err.Error())
-		}
 		if !ok {
 			return c.Status(fiber.StatusServiceUnavailable).SendString(
 				fmt.Sprintf("%d actions already running", node.MaxNumActions),
 			)
+		}
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 		}
 		return c.SendString(out)
 	})
