@@ -58,6 +58,8 @@ action-groups:
 actions:
   "list":
     description: "List the contents of a directory"
+    resources:
+      "status": 1
     params: []
     commands:
       - "ls"
@@ -65,6 +67,8 @@ actions:
   "echo":
     description: "A command that will allow you to print a message"
     params: ["message", "other"]
+    resources:
+      "status": 1
     commands:
       - "echo {{.message}}"
       - "echo {{.other}}"
@@ -72,10 +76,16 @@ actions:
   "sleep":
     description: "A command that will sleep"
     params: ["time"]
+    resources:
+      "blocking": 1
     commands:
       - "date"
       - "sleep {{.time}}"
       - "date"
+
+resource-groups:
+  "blocking": 1
+  "status": 100
 ```
 
 ### Running user operations
