@@ -178,9 +178,7 @@ Where `adhoc.json` is:
 
 ### MVP
 
-- [ ] a way to query available resource groups on a tester
 - [ ] some basic form of auth even if it's just a shared secret that gets generated at node/orch startup
-- [ ] resource groups to specify the number of actions allowed to be running within the group (i.e. should be able to run status action if there is a long running worker action). should also work with adhoc actions
 
 ### High Priority
 

@@ -9,7 +9,7 @@ import (
 type ResourceGroup struct {
 	ResourceBase
 	semaphore semaphore.Weighted
-	held      int64
+	Held      int64 `json:"held"`
 }
 
 func NewResourceGroup(name string, count int64) *ResourceGroup {
@@ -19,7 +19,7 @@ func NewResourceGroup(name string, count int64) *ResourceGroup {
 			Count: count,
 		},
 		semaphore: *semaphore.NewWeighted(count),
-		held:      0,
+		Held:      0,
 	}
 }
 
@@ -36,29 +36,29 @@ func (r *ResourceGroup) GetCount() int64 {
 }
 
 func (r *ResourceGroup) GetHeld() int64 {
-	return r.held
+	return r.Held
 }
 
 func (r *ResourceGroup) Acquire(ctx context.Context, n int64) error {
 	if err := r.semaphore.Acquire(ctx, n); err != nil {
 		return err
 	}
-	r.held += n
+	r.Held += n
 	return nil
 }
 
 func (r *ResourceGroup) Release(n int64) {
 	r.semaphore.Release(n)
-	r.held -= n
-	if r.held < 0 {
-		r.held = 0
+	r.Held -= n
+	if r.Held < 0 {
+		r.Held = 0
 	}
 }
 
 func (r *ResourceGroup) TryAcquire(n int64) bool {
 	ok := r.semaphore.TryAcquire(n)
 	if ok {
-		r.held += n
+		r.Held += n
 	}
 	return ok
 }

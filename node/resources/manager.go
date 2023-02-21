@@ -11,33 +11,33 @@ import (
 )
 
 type ResourceHandle struct {
-	Id      uuid.UUID
-	Request *ResourceRequest
-	Created time.Time
+	id      uuid.UUID
+	Request *ResourceRequest `json:"request"`
+	Created time.Time        `json:"created"`
 }
 
 type ResourceManager struct {
-	groups map[string]*ResourceGroup
-	active map[uuid.UUID]*ResourceHandle
+	Groups map[string]*ResourceGroup     `json:"groups"`
+	Active map[uuid.UUID]*ResourceHandle `json:"active"`
 }
 
 func NewResourceManager(m map[string]int64) *ResourceManager {
 	return &ResourceManager{
-		groups: NewResourceGroupMap(m),
-		active: map[uuid.UUID]*ResourceHandle{},
+		Groups: NewResourceGroupMap(m),
+		Active: map[uuid.UUID]*ResourceHandle{},
 	}
 }
 
 func (rm *ResourceManager) GetCount(name string) int64 {
-	return rm.groups[name].GetCount()
+	return rm.Groups[name].GetCount()
 }
 
 func (rm *ResourceManager) GetHeld(name string) int64 {
-	return rm.groups[name].GetHeld()
+	return rm.Groups[name].GetHeld()
 }
 
 func (rm *ResourceManager) Acquire(name string, ctx context.Context, n int64) error {
-	return rm.groups[name].Acquire(ctx, n)
+	return rm.Groups[name].Acquire(ctx, n)
 }
 
 func (rm *ResourceManager) TryAcquireRequest(request *ResourceRequest) (uuid.UUID, error) {
@@ -53,11 +53,12 @@ func (rm *ResourceManager) TryAcquireRequest(request *ResourceRequest) (uuid.UUI
 	}
 	if success {
 		handle := ResourceHandle{
-			Id:      uuid.Must(uuid.NewUUID()),
+			id:      uuid.Must(uuid.NewUUID()),
 			Request: request,
+			Created: time.Now(),
 		}
-		rm.active[handle.Id] = &handle
-		return handle.Id, nil
+		rm.Active[handle.id] = &handle
+		return handle.id, nil
 	} else {
 		// If we didn't succeed, put everything back
 		for _, resource := range acquired {
@@ -68,16 +69,16 @@ func (rm *ResourceManager) TryAcquireRequest(request *ResourceRequest) (uuid.UUI
 }
 
 func (rm *ResourceManager) TryAcquire(name string, n int64) bool {
-	return rm.groups[name].TryAcquire(n)
+	return rm.Groups[name].TryAcquire(n)
 }
 
 func (rm *ResourceManager) ReleaseHandle(id uuid.UUID) {
 	// Pop the handle out of the map
-	handle, ok := rm.active[id]
+	handle, ok := rm.Active[id]
 	if !ok {
 		return
 	} else {
-		delete(rm.active, id)
+		delete(rm.Active, id)
 	}
 	// Release all held resources
 	for _, resource := range handle.Request.Resources {
@@ -86,7 +87,7 @@ func (rm *ResourceManager) ReleaseHandle(id uuid.UUID) {
 }
 
 func (rm *ResourceManager) Release(name string, n int64) {
-	rm.groups[name].Release(n)
+	rm.Groups[name].Release(n)
 }
 
 func (r *ResourceManager) UnmarshalYAML(node *yaml.Node) error {
@@ -95,7 +96,7 @@ func (r *ResourceManager) UnmarshalYAML(node *yaml.Node) error {
 		return err
 	}
 
-	r.groups = NewResourceGroupMap(m)
+	r.Groups = NewResourceGroupMap(m)
 	return nil
 }
 
@@ -105,6 +106,6 @@ func (r *ResourceManager) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	r.groups = NewResourceGroupMap(m)
+	r.Groups = NewResourceGroupMap(m)
 	return nil
 }

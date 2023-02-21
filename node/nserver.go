@@ -30,6 +30,11 @@ func NServerThread(node *Node, ctx context.Context, logger *slog.Logger, done fu
 		return c.SendString("Gorch node is up and running!")
 	})
 
+	app.Get("/usage", func(c *fiber.Ctx) error {
+		logger.Debug("Usage report")
+		return c.JSON(node.Resources)
+	})
+
 	// Endpoint for interacting with the node's data
 	dataEp := app.Group("/data")
 	dataEp.Get("/", func(c *fiber.Ctx) error {

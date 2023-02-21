@@ -7,7 +7,7 @@ import (
 )
 
 type ResourceRequest struct {
-	Resources map[string]*ResourceBase
+	Resources map[string]*ResourceBase `json:"resources"`
 }
 
 func (r *ResourceRequest) UnmarshalYAML(node *yaml.Node) error {
