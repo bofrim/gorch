@@ -97,7 +97,8 @@ Get all the data from a node
 ./gorch user data \
   --orchestrator "127.0.0.1:443" \
   --node cool_node_1 \
-  --json # optional
+  --json \ # optional
+  --header "X-Authorization: Bearer some_token"
 
 ```
 
@@ -108,7 +109,8 @@ Get a specific json file from a node
   --orchestrator "127.0.0.1:443" \
   --node cool_node_1 \
   --path asdf \
-  --json # optional
+  --json \ # optional
+  --header "X-Authorization: Bearer some_token"
 
 ```
 
@@ -120,7 +122,8 @@ Run an action on a node
   --node cool_node_1 \
   --action hello \
   --data message=hello \
-  --data other=world
+  --data other=world \
+  --header "X-Authorization: Bearer some_token"
 ```
 
 Run an action on a node and stream output.
@@ -131,7 +134,8 @@ Run an action on a node and stream output.
   --node cool_node_1 \
   --action sleep \
   --data time=5 \
-  --stream-port 8323
+  --stream-port 8323 \
+  --header "X-Authorization: Bearer some_token"
 ```
 
 Specify a data file to use as the body of the request
@@ -142,7 +146,8 @@ Specify a data file to use as the body of the request
   --node cool_node_1 \
   --action sleep \
   --data-file params.json \
-  --stream-port 8323
+  --stream-port 8323 \
+  --header "X-Authorization: Bearer some_token"
 ```
 
 Run arbitrary commands on a node
@@ -153,7 +158,8 @@ Run arbitrary commands on a node
   --node brad \
   --data-file adhoc.json \
   --data message="hello" \  # data can be specified in the data-file, or as a flag
-  --stream-port 8323
+  --stream-port 8323 \
+  --header "X-Authorization: Bearer some_token"
 ```
 
 Where `adhoc.json` is:
