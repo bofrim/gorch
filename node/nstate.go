@@ -129,7 +129,7 @@ func register(orchAddr, nodeName string, nodePort int) error {
 		return err
 	}
 	if resp.StatusCode != http.StatusOK {
-		err := fmt.Errorf("request not OK: %d", resp.StatusCode)
+		err := fmt.Errorf("request to node not OK: %d", resp.StatusCode)
 		log.Println(err.Error())
 		return err
 	}

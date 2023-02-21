@@ -69,6 +69,24 @@ var actionCommand = cli.Command{
 				return nil
 			},
 		},
+		&cli.StringSliceFlag{
+			Name:  "header",
+			Usage: "Specify a header to pass along. Formatted like 'key: value'",
+			Action: func(ctx *cli.Context, v []string) error {
+				for _, h := range v {
+					splitHeader := strings.Split(h, ":")
+					if len(splitHeader) != 2 {
+						return fmt.Errorf("expected header to be formatted like 'key: value'. Got: %s", h)
+					}
+					key := strings.TrimSpace(splitHeader[0])
+					value := strings.TrimSpace(splitHeader[1])
+					if key == "" || value == "" {
+						return fmt.Errorf("header keys and values should not be empty. key: '%s'; value: '%s'", key, value)
+					}
+				}
+				return nil
+			},
+		},
 	},
 	Action: func(ctx *cli.Context) error {
 		addr := ctx.String("orchestrator")
@@ -100,11 +118,19 @@ var actionCommand = cli.Command{
 		maps.Copy(data, flagData)
 		maps.Copy(data, fileData)
 
+		headers := make(map[string]string)
+		for _, h := range ctx.StringSlice("header") {
+			splitHeader := strings.Split(h, ":")
+			key := strings.TrimSpace(splitHeader[0])
+			value := strings.TrimSpace(splitHeader[1])
+			headers[key] = value
+		}
+
 		var runErr error
 		if streamPort != 0 {
-			runErr = StreamAction(addr, node, streamPort, action, data)
+			runErr = StreamAction(addr, node, streamPort, action, data, headers)
 		} else {
-			runErr = RunAction(addr, node, action, data)
+			runErr = RunAction(addr, node, action, data, headers)
 		}
 		if runErr != nil {
 			fmt.Printf("Action Error: %v", runErr)

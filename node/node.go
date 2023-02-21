@@ -25,6 +25,7 @@ type Node struct {
 	MaxNumActions    int
 	CertPath         string
 	Resources        *resources.ResourceManager
+	token            string
 }
 
 func (node *Node) Run(logger *slog.Logger) (err error) {

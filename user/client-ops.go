@@ -45,16 +45,16 @@ func GetNodes(addr string) ([]byte, error) {
 	return body, nil
 }
 
-func RunAction(addr string, node string, action string, data map[string]interface{}) error {
+func RunAction(addr string, node string, action string, data map[string]interface{}, headers map[string]string) error {
 	url := fmt.Sprintf("https://%s/%s/action/%s", addr, node, action)
-	return DoPostRequest(url, data)
+	return DoPostRequest(url, data, headers)
 }
 
-func StreamAction(addr string, node string, streamPort int, action string, data map[string]interface{}) error {
+func StreamAction(addr string, node string, streamPort int, action string, data map[string]interface{}, headers map[string]string) error {
 	url := fmt.Sprintf("https://%s/%s/action/%s", addr, node, action)
 	data["stream_addr"] = "loopback"
 	data["stream_port"] = fmt.Sprintf("%d", streamPort)
-	postErr := DoPostRequest(url, data)
+	postErr := DoPostRequest(url, data, headers)
 	if postErr != nil {
 		return postErr
 	}
@@ -64,23 +64,26 @@ func StreamAction(addr string, node string, streamPort int, action string, data 
 	return h.Listen(streamPort)
 }
 
-func RequestData(addr string, node string, path string) ([]byte, error) {
+func RequestData(addr string, node string, path string, headers map[string]string) ([]byte, error) {
 	url := fmt.Sprintf("https://%s/%s/data/%s", addr, node, path)
-	return DoGetRequest(url)
+	return DoGetRequest(url, headers)
 }
 
-func RequestDataList(addr string, node string, path string) ([]byte, error) {
+func RequestDataList(addr string, node string, path string, headers map[string]string) ([]byte, error) {
 	url := fmt.Sprintf("https://%s/%s/list/%s", addr, node, path)
 	fmt.Println("Requesting data list from: " + url)
-	return DoGetRequest(url)
+	return DoGetRequest(url, headers)
 }
 
-func DoGetRequest(url string) ([]byte, error) {
+func DoGetRequest(url string, headers map[string]string) ([]byte, error) {
 	// Prepare the request
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
 	}
 
 	// Do the request
@@ -98,7 +101,7 @@ func DoGetRequest(url string) ([]byte, error) {
 	}
 	if resp.StatusCode != http.StatusOK {
 		fmt.Printf("Bad request: %s\n", resp.Status)
-		return nil, fmt.Errorf("request not OK: %d", resp.StatusCode)
+		return nil, fmt.Errorf("get request not OK: %d", resp.StatusCode)
 	}
 
 	// Read the response body
@@ -110,7 +113,7 @@ func DoGetRequest(url string) ([]byte, error) {
 	return body, nil
 }
 
-func DoPostRequest(url string, data map[string]interface{}) error {
+func DoPostRequest(url string, data map[string]interface{}, headers map[string]string) error {
 	serial, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -121,6 +124,10 @@ func DoPostRequest(url string, data map[string]interface{}) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	for k, v := range headers {
+		fmt.Printf("Setting header: %s: %s\n", k, v)
+		req.Header.Set(k, v)
+	}
 	req.Close = true
 
 	// Do the request
@@ -137,8 +144,8 @@ func DoPostRequest(url string, data map[string]interface{}) error {
 		return err
 	}
 	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("Bad request: %s\n", resp.Status)
-		return fmt.Errorf("request not OK: %d", resp.StatusCode)
+		fmt.Printf("Bad request: %s\nReq:\n%+v\n", resp.Status, req)
+		return fmt.Errorf("post request not OK: %d", resp.StatusCode)
 	}
 
 	// Process the response body

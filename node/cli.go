@@ -80,6 +80,11 @@ func GetCliCommand() *cli.Command {
 					return nil
 				},
 			},
+			&cli.StringFlag{
+				Name:  "token",
+				Usage: "Specify a shared secret token used for authentication (note: this is insecure but better than nothing)",
+				Value: "",
+			},
 		},
 		Action: func(cCtx *cli.Context) error {
 			// Get config file location from cli
@@ -113,6 +118,7 @@ func GetCliCommand() *cli.Command {
 				MaxNumActions:    int(config.ResourceGroups["total"]),
 				CertPath:         config.CertPath,
 				Resources:        resources.NewResourceManager(config.ResourceGroups),
+				token:            cCtx.String("token"),
 			}
 
 			// Setup logging

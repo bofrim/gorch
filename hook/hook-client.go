@@ -106,7 +106,7 @@ func (h *HookClient) post(url string, body []byte) error {
 	}
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("Bad request")
-		return fmt.Errorf("request not OK: %d", resp.StatusCode)
+		return fmt.Errorf("hook request not OK: %d", resp.StatusCode)
 	}
 	return nil
 }

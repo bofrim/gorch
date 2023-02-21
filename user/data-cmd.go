@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v3"
@@ -34,10 +35,35 @@ var dataRequestCommand = cli.Command{
 			Usage: "Specify if the output should be in JSON format.",
 			Value: false,
 		},
+		&cli.StringSliceFlag{
+			Name:  "header",
+			Usage: "Specify a header to pass along. Formatted like 'key: value'",
+			Action: func(ctx *cli.Context, v []string) error {
+				for _, h := range v {
+					splitHeader := strings.Split(h, ":")
+					if len(splitHeader) != 2 {
+						return fmt.Errorf("expected header to be formatted like 'key: value'. Got: %s", h)
+					}
+					key := strings.TrimSpace(splitHeader[0])
+					value := strings.TrimSpace(splitHeader[1])
+					if key != "" && value != "" {
+						return fmt.Errorf("header keys and values should not be empty")
+					}
+				}
+				return nil
+			},
+		},
 	},
 	Action: func(ctx *cli.Context) error {
+		headers := make(map[string]string)
+		for _, h := range ctx.StringSlice("header") {
+			splitHeader := strings.Split(h, ":")
+			key := strings.TrimSpace(splitHeader[0])
+			value := strings.TrimSpace(splitHeader[1])
+			headers[key] = value
+		}
 		// Send the request
-		raw, err := RequestData(ctx.String("orchestrator"), ctx.String("node"), ctx.String("path"))
+		raw, err := RequestData(ctx.String("orchestrator"), ctx.String("node"), ctx.String("path"), headers)
 		if err != nil {
 			log.Printf("error requesting data: %v", err)
 			return err
@@ -101,10 +127,35 @@ var dataListCommand = cli.Command{
 			Usage: "Specify if the output should be in JSON format.",
 			Value: false,
 		},
+		&cli.StringSliceFlag{
+			Name:  "header",
+			Usage: "Specify a header to pass along. Formatted like 'key: value'",
+			Action: func(ctx *cli.Context, v []string) error {
+				for _, h := range v {
+					splitHeader := strings.Split(h, ":")
+					if len(splitHeader) != 2 {
+						return fmt.Errorf("expected header to be formatted like 'key: value'. Got: %s", h)
+					}
+					key := strings.TrimSpace(splitHeader[0])
+					value := strings.TrimSpace(splitHeader[1])
+					if key != "" && value != "" {
+						return fmt.Errorf("header keys and values should not be empty")
+					}
+				}
+				return nil
+			},
+		},
 	},
 	Action: func(ctx *cli.Context) error {
+		headers := make(map[string]string)
+		for _, h := range ctx.StringSlice("header") {
+			splitHeader := strings.Split(h, ":")
+			key := strings.TrimSpace(splitHeader[0])
+			value := strings.TrimSpace(splitHeader[1])
+			headers[key] = value
+		}
 		// Send the request
-		raw, err := RequestDataList(ctx.String("orchestrator"), ctx.String("node"), ctx.String("path"))
+		raw, err := RequestDataList(ctx.String("orchestrator"), ctx.String("node"), ctx.String("path"), headers)
 		if err != nil {
 			return err
 		}

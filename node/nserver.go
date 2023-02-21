@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/bofrim/gorch/auth"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/exp/slog"
 )
@@ -23,6 +24,11 @@ func NServerThread(node *Node, ctx context.Context, logger *slog.Logger, done fu
 		logger.Info("Server done. Shutting down.")
 		app.Shutdown()
 	}()
+
+	if node.token != "" {
+		auth.AddToken(node.token)
+		app.Use(auth.InsecureAuthMiddleware)
+	}
 
 	// Status endpoint
 	app.Get("/", func(c *fiber.Ctx) error {
