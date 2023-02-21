@@ -36,7 +36,7 @@ go build -o gorch gorch.go
 ### Running a node
 
 ```bash
-./gorch node --config /path/to/config.yaml
+./gorch node --config /path/to/config.yaml --token "some_token"
 ```
 
 ```yaml
@@ -176,10 +176,6 @@ Where `adhoc.json` is:
 
 - [ ] sending a sleep action, then sending an echo will cause the echo to override the sleep and return on the sleep's stream if the steam port is the same
 
-### MVP
-
-- [ ] some basic form of auth even if it's just a shared secret that gets generated at node/orch startup
-
 ### High Priority
 
 - [ ] Setup centralized logging for nodes so logs will be accessible through the orchestrator even if the node is offline
@@ -190,13 +186,8 @@ Where `adhoc.json` is:
 
 ### Nice to have
 
-- [ ] Add a way to specify a configuration file for a node
 - [ ] Add a way to run periodic actions on a node (should be an optional configuration option for a node) Figure out what to do with the output of the action.
 - [ ] Setup web hooks for data changes or events related to actions
 - [ ] Add a user command to stream logs from either the orchestrator or a specific node
-- [ ] Gracefully handle errors in the actions
 - [ ] Hook listeners should have IDs for actions that are tracked on the node side
 - [ ] webhook for action completion
-- [ ] TLS for action streaming
-- [ ] a flag to chose if its able to run on a real network
-- [ ] a broadcast command to run action a set of nodes
